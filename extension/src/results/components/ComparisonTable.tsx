@@ -1,6 +1,7 @@
 import React from 'react';
 import { Check, ExternalLink } from 'lucide-react';
 import { ComparisonItem, Criterion, PageSnapshot } from '../../models/types';
+import { buildAffiliateUrl, getRetailerCta } from '../../utils/affiliateHelper';
 
 interface ComparisonTableProps {
   items: ComparisonItem[];
@@ -101,6 +102,33 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ items, criteri
                 </tr>
               );
             })}
+            {/* Action Row: Direct Links & Deals */}
+            <tr className="action-row">
+              <td className="td-feature td-action-feature">
+                <span className="feature-name">Store Links & Deals</span>
+                <span className="affiliate-subtle-hint">Partner Link</span>
+              </td>
+              {items.map((item) => {
+                const page = pageMap.get(item.id);
+                if (!page) {
+                  return <td key={item.id} className="td-value td-action-cell">-</td>;
+                }
+                const affUrl = buildAffiliateUrl(page.url);
+                return (
+                  <td key={item.id} className="td-value td-action-cell">
+                    <a
+                      href={affUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn-table-deal"
+                    >
+                      <span>{getRetailerCta(page.domain)}</span>
+                      <ExternalLink size={12} />
+                    </a>
+                  </td>
+                );
+              })}
+            </tr>
           </tbody>
         </table>
       </div>

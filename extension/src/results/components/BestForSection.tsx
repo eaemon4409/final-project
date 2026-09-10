@@ -1,6 +1,7 @@
 import React from 'react';
-import { Award } from 'lucide-react';
+import { Award, ExternalLink } from 'lucide-react';
 import { BestFor, ComparisonItem, PageSnapshot } from '../../models/types';
+import { buildAffiliateUrl, getRetailerCta } from '../../utils/affiliateHelper';
 
 interface BestForSectionProps {
   bestFor: BestFor[];
@@ -35,6 +36,19 @@ export const BestForSection: React.FC<BestForSectionProps> = ({ bestFor, items, 
               </div>
               <h4 className="best-for-item-name">{item?.displayName || entry.itemId}</h4>
               <p className="best-for-reason">{entry.reason}</p>
+              {page && (
+                <div className="best-for-footer">
+                  <a
+                    href={buildAffiliateUrl(page.url)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="best-for-deal-link"
+                  >
+                    <span>{getRetailerCta(page.domain)}</span>
+                    <ExternalLink size={12} />
+                  </a>
+                </div>
+              )}
             </div>
           );
         })}

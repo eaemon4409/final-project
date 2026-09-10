@@ -1,6 +1,7 @@
 import React from 'react';
 import { Trophy, HelpCircle, Sparkles } from 'lucide-react';
 import { BestOverall, ComparisonItem, PageSnapshot } from '../../models/types';
+import { buildAffiliateUrl, getRetailerCta } from '../../utils/affiliateHelper';
 
 interface QuickVerdictProps {
   bestOverall: BestOverall;
@@ -50,14 +51,15 @@ export const QuickVerdict: React.FC<QuickVerdictProps> = ({ bestOverall, items, 
         {!isNoWinner && winnerPage && (
           <div className="verdict-action">
             <a
-              href={winnerPage.url}
+              href={buildAffiliateUrl(winnerPage.url)}
               target="_blank"
               rel="noreferrer"
               className="btn-view-winner"
             >
-              <span>View Original Winner Page</span>
+              <span>🔥 {getRetailerCta(winnerPage.domain)}</span>
               <Sparkles size={14} />
             </a>
+            <span className="affiliate-disclosure-tag">Partner Deal Link</span>
           </div>
         )}
       </div>
