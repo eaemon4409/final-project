@@ -1,6 +1,6 @@
 import { ApiResponse, ComparisonResult, ComparisonState } from '../models/types';
 
-const DEFAULT_API_URL = 'http://127.0.0.1:8000/api/v1';
+const DEFAULT_API_URL = 'https://compare-anything-backend.onrender.com/api/v1';
 const REQUEST_TIMEOUT_MS = 60000; // 60 seconds for AI processing
 
 export class ApiError extends Error {
