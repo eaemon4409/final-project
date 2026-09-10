@@ -10,9 +10,9 @@ export interface AffiliateConfig {
 }
 
 const DEFAULT_CONFIG: AffiliateConfig = {
-  amazonTag: 'compareanything-20', // Replace with your Amazon Associates Tag
-  darazAffiliateId: 'compareanything', // Replace with your Daraz Affiliate ID
-  genericRefTag: 'compareanything',
+  amazonTag: 'eaemon-20', // Emon Ahmed's verified Amazon Associates Tag
+  darazAffiliateId: 'compareanything', // Replace with Daraz Affiliate ID once approved
+  genericRefTag: 'eaemon',
 };
 
 let activeConfig: AffiliateConfig = { ...DEFAULT_CONFIG };
