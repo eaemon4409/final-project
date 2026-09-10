@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800" width="1280" height="800">
+  <defs>
+    <linearGradient id="pageBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafd" />
+      <stop offset="100%" stop-color="#e8f0fe" />
+    </linearGradient>
+    <filter id="shadowLg" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#3c4043" flood-opacity="0.16" />
+    </filter>
+    <filter id="shadowSm" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#3c4043" flood-opacity="0.10" />
+    </filter>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="1280" height="800" fill="url(#pageBg)" />
+
+  <!-- Header Banner -->
+  <g transform="translate(80, 42)">
+    <rect x="0" y="0" width="168" height="28" rx="14" fill="#1a73e8" fill-opacity="0.12" />
+    <text x="14" y="19" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#1a73e8">COMPARE ANYTHING</text>
+    
+    <text x="0" y="62" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="32" font-weight="800" fill="#202124" letter-spacing="-0.6">2. Quick Verdict & Fact-Checked Best Overall</text>
+    <text x="0" y="88" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="400" fill="#5f6368">Evidence-based decision engine selects the top choice with concrete citations based on your goal.</text>
+  </g>
+
+  <!-- Main Window Frame (macOS / Chrome style) -->
+  <g transform="translate(80, 150)" filter="url(#shadowLg)">
+    <!-- Window Border & Body -->
+    <rect width="1120" height="600" rx="12" fill="#ffffff" stroke="#dadce0" stroke-width="1.5" />
+
+    <!-- Browser Chrome Toolbar -->
+    <path d="M 0 12 Q 0 0 12 0 L 1108 0 Q 1120 0 1120 12 L 1120 44 L 0 44 Z" fill="#f1f3f4" />
+    <line x1="0" y1="44" x2="1120" y2="44" stroke="#dadce0" stroke-width="1" />
+    
+    <!-- Window Controls -->
+    <circle cx="20" cy="22" r="6" fill="#ea4335" />
+    <circle cx="38" cy="22" r="6" fill="#fbbc05" />
+    <circle cx="56" cy="22" r="6" fill="#34a853" />
+
+    <!-- Omnibox URL Bar -->
+    <rect x="180" y="9" width="760" height="26" rx="13" fill="#ffffff" stroke="#dfe1e5" stroke-width="1" />
+    <text x="210" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="400" fill="#5f6368">chrome-extension://compare-anything/results.html</text>
+
+    <!-- Injected View Content -->
+    
+  <rect x="0" y="45" width="1120" height="555" fill="#f8fafd" />
+
+  <!-- Results Page Sub-Nav -->
+  <g transform="translate(40, 65)">
+    <text x="0" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="800" fill="#202124">ASUS Vivobook 15 vs Lenovo IdeaPad 5</text>
+    <rect x="430" y="6" width="130" height="24" rx="12" fill="#e8f0fe" />
+    <text x="442" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#1a73e8">Laptop Comparison</text>
+
+    <!-- Export buttons top right -->
+    <rect x="870" y="2" width="105" height="32" rx="6" fill="#ffffff" stroke="#dadce0" stroke-width="1" />
+    <text x="892" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="600" fill="#3c4043">📥 Export CSV</text>
+
+    <rect x="990" y="2" width="90" height="32" rx="6" fill="#1a73e8" />
+    <text x="1005" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#ffffff">📋 Copy</text>
+  </g>
+
+  <!-- Quick Verdict Hero Card (Google Chrome Light Style) -->
+  <g transform="translate(40, 120)" filter="url(#shadowSm)">
+    <rect width="1040" height="170" rx="10" fill="#ffffff" stroke="#dadce0" stroke-width="1" />
+    <rect width="8" height="170" rx="4" fill="#34a853" />
+
+    <g transform="translate(30, 26)">
+      <!-- Star Badge -->
+      <rect x="0" y="0" width="165" height="24" rx="12" fill="#e6f4ea" />
+      <circle cx="12" cy="12" r="5" fill="#188038" />
+      <text x="24" y="16" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="800" fill="#188038">BEST OVERALL WINNER</text>
+
+      <text x="0" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="24" font-weight="800" fill="#202124">Lenovo IdeaPad 5 15ABR8</text>
+      
+      <text x="0" y="86" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="400" fill="#3c4043">
+        Selected as top recommendation for programming under Tk 80,000. Features AMD Ryzen 7 7730U (8 cores / 16 threads)
+      </text>
+      <text x="0" y="106" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="400" fill="#3c4043">
+        providing significantly superior multi-core compile speeds compared to the 10-core (2P+8E) Core i5.
+      </text>
+
+      <!-- Trust Badges -->
+      <rect x="0" y="122" width="150" height="22" rx="4" fill="#f1f3f4" />
+      <text x="10" y="137" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="600" fill="#5f6368">✓ 100% Page Evidence</text>
+
+      <rect x="160" y="122" width="160" height="22" rx="4" fill="#f1f3f4" />
+      <text x="170" y="137" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="600" fill="#5f6368">✓ Zero Hallucination Rule</text>
+    </g>
+  </g>
+
+  <!-- Preview of Table header below -->
+  <g transform="translate(40, 310)">
+    <rect width="1040" height="260" rx="8" fill="#ffffff" stroke="#dadce0" stroke-width="1" />
+    <path d="M 0 8 Q 0 0 8 0 L 1032 0 Q 1040 0 1040 8 L 1040 50 L 0 50 Z" fill="#f8f9fa" />
+    <line x1="0" y1="50" x2="1040" y2="50" stroke="#dadce0" stroke-width="1" />
+    
+    <text x="30" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#5f6368">SPECIFICATION / CRITERIA</text>
+    <text x="380" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="700" fill="#1a73e8">ASUS Vivobook 15 (startech)</text>
+    <text x="720" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="700" fill="#188038">Lenovo IdeaPad 5 (ryans) ★</text>
+
+    <!-- Row 1: Price -->
+    <line x1="0" y1="100" x2="1040" y2="100" stroke="#f1f3f4" stroke-width="1" />
+    <text x="30" y="80" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="700" fill="#202124">Price</text>
+    <text x="380" y="80" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="700" fill="#188038">Tk 74,500 (Winner)</text>
+    <text x="720" y="80" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="600" fill="#3c4043">Tk 78,000</text>
+
+    <!-- Row 2: Processor -->
+    <line x1="0" y1="150" x2="1040" y2="150" stroke="#f1f3f4" stroke-width="1" />
+    <text x="30" y="130" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="700" fill="#202124">Processor</text>
+    <text x="380" y="130" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="500" fill="#3c4043">Intel Core i5-1335U</text>
+    <text x="720" y="130" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="700" fill="#188038">AMD Ryzen 7 7730U (Winner)</text>
+  </g>
+
+  </g>
+</svg>

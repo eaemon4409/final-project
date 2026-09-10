@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 280" width="440" height="280">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a73e8" />
+      <stop offset="60%" stop-color="#1557b0" />
+      <stop offset="100%" stop-color="#0d47a1" />
+    </linearGradient>
+    <linearGradient id="cardGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#f8f9fa" stop-opacity="0.90" />
+    </linearGradient>
+    <filter id="drop" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="440" height="280" fill="url(#bgGrad)" />
+
+  <!-- Subtle circles for modern tech feel -->
+  <circle cx="400" cy="40" r="120" fill="#ffffff" fill-opacity="0.04" />
+  <circle cx="30" cy="240" r="100" fill="#ffffff" fill-opacity="0.04" />
+
+  <!-- Logo emblem (Overlap Cards with Comparison Spark) -->
+  <g transform="translate(40, 48)" filter="url(#drop)">
+    <!-- Card A -->
+    <rect x="0" y="0" width="56" height="74" rx="8" fill="#e8f0fe" stroke="#1a73e8" stroke-width="2" />
+    <line x1="10" y1="18" x2="46" y2="18" stroke="#1a73e8" stroke-width="3" stroke-linecap="round" />
+    <line x1="10" y1="28" x2="38" y2="28" stroke="#70757a" stroke-width="2" stroke-linecap="round" />
+    <line x1="10" y1="36" x2="42" y2="36" stroke="#70757a" stroke-width="2" stroke-linecap="round" />
+    <line x1="10" y1="44" x2="30" y2="44" stroke="#1a73e8" stroke-width="2" stroke-linecap="round" />
+
+    <!-- Card B (Offset) -->
+    <rect x="24" y="16" width="56" height="74" rx="8" fill="#ffffff" stroke="#188038" stroke-width="2.5" />
+    <line x1="34" y1="34" x2="70" y2="34" stroke="#188038" stroke-width="3" stroke-linecap="round" />
+    <line x1="34" y1="44" x2="62" y2="44" stroke="#70757a" stroke-width="2" stroke-linecap="round" />
+    <line x1="34" y1="52" x2="66" y2="52" stroke="#70757a" stroke-width="2" stroke-linecap="round" />
+    <circle cx="68" cy="74" r="5" fill="#188038" />
+
+    <!-- Comparison Sparkle Icon -->
+    <circle cx="68" cy="8" r="14" fill="#f9ab00" filter="url(#drop)" />
+    <path d="M68 1 L71 6 L76 8 L71 10 L68 15 L65 10 L60 8 L65 6 Z" fill="#ffffff" />
+  </g>
+
+  <!-- Typography -->
+  <text x="140" y="78" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif" font-size="28" font-weight="800" fill="#ffffff" letter-spacing="-0.5">Compare Anything</text>
+  <text x="140" y="104" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif" font-size="14" font-weight="500" fill="#d2e3fc">AI-Powered Web Comparison</text>
+
+  <!-- Badge: Zero Hallucination -->
+  <g transform="translate(140, 118)">
+    <rect x="0" y="0" width="235" height="26" rx="13" fill="#ffffff" fill-opacity="0.18" stroke="#ffffff" stroke-width="1" stroke-opacity="0.3" />
+    <circle cx="14" cy="13" r="4" fill="#34a853" />
+    <text x="24" y="17" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif" font-size="11" font-weight="700" fill="#ffffff">ZERO HALLUCINATION GUARANTEE</text>
+  </g>
+
+  <!-- Mini feature pills at bottom -->
+  <g transform="translate(40, 195)">
+    <!-- Pill 1 -->
+    <rect x="0" y="0" width="112" height="38" rx="8" fill="url(#cardGrad1)" filter="url(#drop)" />
+    <text x="14" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#1a73e8">⚡ Fast Verdict</text>
+
+    <!-- Pill 2 -->
+    <rect x="124" y="0" width="116" height="38" rx="8" fill="url(#cardGrad1)" filter="url(#drop)" />
+    <text x="136" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#188038">📊 Dynamic Table</text>
+
+    <!-- Pill 3 -->
+    <rect x="250" y="0" width="110" height="38" rx="8" fill="url(#cardGrad1)" filter="url(#drop)" />
+    <text x="264" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#202124">🔒 100% Private</text>
+  </g>
+
+  <text x="220" y="260" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="500" fill="#93bcf8">Chrome Extension • Works on Any 2 to 4 Pages</text>
+</svg>

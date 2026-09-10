@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Compare Anything – AI Web Comparison",
+  "version": "1.0.0",
+  "description": "Add 2–4 web pages and get one clear AI comparison table based only on the information on those pages.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8000/*",
+    "http://localhost:8000/*"
+  ],
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: compare-anything-backend
+    runtime: docker
+    plan: free
+    region: oregon
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: APP_NAME
+        value: "Compare Anything AI Backend"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        generateValue: true
+      - key: AI_PROVIDER
+        value: groq
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b
+      - key: GROQ_TIMEOUT
+        value: "45"
+      - key: GROQ_API_KEY
+        sync: false
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: CACHE_STORE
+        value: array
+      - key: SESSION_DRIVER
+        value: array
