@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, RotateCcw, ShieldCheck, Sparkles, Settings } from 'lucide-react';
 import { CurrentPageCard } from './components/CurrentPageCard';
 import { SelectedPageList } from './components/SelectedPageList';
 import { GoalInput } from './components/GoalInput';
+import { SettingsModal } from './components/SettingsModal';
 import {
   getComparisonState,
   addPageSnapshot,
@@ -25,6 +26,7 @@ export const Popup: React.FC = () => {
   const [isExtracting, setIsExtracting] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Load active tab and state on mount
   useEffect(() => {
@@ -139,6 +141,15 @@ export const Popup: React.FC = () => {
             <p className="brand-tagline">Stop switching between tabs. Compare them.</p>
           </div>
         </div>
+        <button
+          type="button"
+          className="btn-header-settings"
+          onClick={() => setIsSettingsOpen(true)}
+          title="Monetization & API Settings"
+          aria-label="Settings"
+        >
+          <Settings size={16} />
+        </button>
       </header>
 
       {/* Main Content Area */}
@@ -202,6 +213,12 @@ export const Popup: React.FC = () => {
           <span>Only pages you explicitly add are accessed. Zero data selling.</span>
         </div>
       </footer>
+
+      {/* Monetization & API Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </div>
   );
 };

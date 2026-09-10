@@ -27,6 +27,7 @@ import { BestForSection } from './components/BestForSection';
 import { KeyDifferences } from './components/KeyDifferences';
 import { MissingInformation } from './components/MissingInformation';
 import { SourcesList } from './components/SourcesList';
+import { initAffiliateConfig } from '../utils/affiliateHelper';
 import './Results.css';
 
 const ResultsApp: React.FC = () => {
@@ -45,6 +46,7 @@ const ResultsApp: React.FC = () => {
     setError(null);
 
     try {
+      await initAffiliateConfig();
       const currentState = await getComparisonState();
       setState(currentState);
 

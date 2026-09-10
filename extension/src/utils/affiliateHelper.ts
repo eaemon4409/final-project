@@ -15,11 +15,47 @@ const DEFAULT_CONFIG: AffiliateConfig = {
   genericRefTag: 'compareanything',
 };
 
+let activeConfig: AffiliateConfig = { ...DEFAULT_CONFIG };
+
+// Auto-load config from chrome.storage.local if available
+if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+  chrome.storage.local.get('affiliateConfig').then((res) => {
+    if (res && res.affiliateConfig) {
+      activeConfig = { ...DEFAULT_CONFIG, ...res.affiliateConfig };
+    }
+  }).catch(() => {});
+}
+
+export async function initAffiliateConfig(): Promise<AffiliateConfig> {
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    try {
+      const res = await chrome.storage.local.get('affiliateConfig');
+      if (res && res.affiliateConfig) {
+        activeConfig = { ...DEFAULT_CONFIG, ...res.affiliateConfig };
+      }
+    } catch {
+      // fallback to activeConfig
+    }
+  }
+  return activeConfig;
+}
+
+export function getActiveAffiliateConfig(): AffiliateConfig {
+  return activeConfig;
+}
+
+export async function saveAffiliateConfig(cfg: Partial<AffiliateConfig>): Promise<void> {
+  activeConfig = { ...activeConfig, ...cfg };
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    await chrome.storage.local.set({ affiliateConfig: activeConfig });
+  }
+}
+
 /**
  * Transforms an original product URL into a monetized affiliate URL.
  * Transparently preserves original page destination while attaching tracking tags.
  */
-export function buildAffiliateUrl(originalUrl: string, config: AffiliateConfig = DEFAULT_CONFIG): string {
+export function buildAffiliateUrl(originalUrl: string, config: AffiliateConfig = activeConfig): string {
   if (!originalUrl) return '';
 
   try {
@@ -64,7 +100,7 @@ export function buildAffiliateUrl(originalUrl: string, config: AffiliateConfig =
       hostname.includes('walmart.') ||
       hostname.includes('coursera.')
     ) {
-      const ref = config.genericRefTag || DEFAULT_CONFIG.genericRefTag;
+      const ref = config.genericRefTag || DEFAULT_CONFIG.genericRefTag || 'compareanything';
       urlObj.searchParams.set('ref', ref);
       urlObj.searchParams.set('utm_source', 'compare_anything');
       urlObj.searchParams.set('utm_medium', 'extension_comparison');

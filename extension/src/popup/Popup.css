@@ -93,8 +93,30 @@ body {
 
 /* Header — Chrome Native Styling */
 .popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   border-bottom: 1px solid var(--chrome-border-subtle);
   padding-bottom: 12px;
+}
+
+.btn-header-settings {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--chrome-text-secondary);
+  cursor: pointer;
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-header-settings:hover {
+  background: var(--chrome-bg-hover);
+  color: var(--chrome-text-primary);
+  border-color: var(--chrome-border);
 }
 
 .brand-badge {
@@ -592,4 +614,196 @@ body {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Monetization & Settings Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  animation: modalFadeIn 0.15s ease-out;
+}
+
+.modal-dialog {
+  background: var(--chrome-bg-main);
+  border: 1px solid var(--chrome-border);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 340px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalScaleUp 0.18s ease-out;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--chrome-border-subtle);
+  background: var(--chrome-bg-surface);
+}
+
+.modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--chrome-text-primary);
+}
+
+.modal-icon-gold {
+  color: var(--chrome-amber);
+}
+
+.btn-close-modal {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--chrome-text-secondary);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.btn-close-modal:hover {
+  background: var(--chrome-bg-hover);
+  color: var(--chrome-text-primary);
+}
+
+.modal-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.settings-desc {
+  font-size: 11px;
+  color: var(--chrome-text-secondary);
+  line-height: 1.4;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-field label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--chrome-text-primary);
+  display: flex;
+  align-items: center;
+}
+
+.settings-field input {
+  background: var(--chrome-bg-surface);
+  border: 1px solid var(--chrome-border);
+  border-radius: var(--radius-md);
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--chrome-text-primary);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.settings-field input:focus {
+  border-color: var(--chrome-blue);
+  background: #ffffff;
+  box-shadow: 0 0 0 2px var(--chrome-blue-tint);
+}
+
+.field-hint {
+  font-size: 10px;
+  color: var(--chrome-text-muted);
+}
+
+.field-hint code {
+  background: var(--chrome-bg-subtle);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 10px;
+}
+
+.settings-divider {
+  height: 1px;
+  background: var(--chrome-border-subtle);
+  margin: 2px 0;
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--chrome-border-subtle);
+  background: var(--chrome-bg-surface);
+}
+
+.btn-cancel {
+  background: #ffffff;
+  border: 1px solid var(--chrome-border);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--chrome-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-cancel:hover {
+  background: var(--chrome-bg-surface);
+  color: var(--chrome-text-primary);
+  border-color: var(--chrome-border-hover);
+}
+
+.btn-save {
+  background: var(--chrome-blue);
+  color: #ffffff;
+  border: 1px solid var(--chrome-blue);
+  border-radius: var(--radius-md);
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.btn-save:hover {
+  background: var(--chrome-blue-hover);
+}
+
+.btn-save.saved {
+  background: var(--chrome-green);
+  border-color: var(--chrome-green);
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalScaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
