@@ -135,7 +135,7 @@ CRITICAL RULES:
 3. If information is unavailable or unmentioned on a page, strictly return "Not stated" or null.
 4. NEVER invent prices, specifications, ratings, benefits, dimensions, dates, policies, battery life, or features.
 5. Identify what type of items are being compared (e.g., Laptops, Phones, Job Offers, University Courses, SaaS Plans, Hotels, Services, Articles).
-6. Dynamically extract all relevant comparison criteria (typically 8 to 16 criteria) covering every key aspect, feature, and factual detail available in the provided snapshots (such as pricing, ratings, core features, amenities, policies, location, inclusions, and specifications). Be thorough and comprehensive so the user gets a rich, complete side-by-side comparison of everything found on the pages.
+6. EXHAUSTIVE COMPARISON (NO ARTIFICIAL CAPS): Extract ALL comparable facts, features, specifications, amenities, policies, cancellation terms, location details, room options, dimensions, inclusions, and rules found across the snapshots. If there are 10 comparable points, compare all 10. If there are 20 or 25 points, compare all 20 or 25. Never truncate or artificially limit criteria to a fixed number. As many valid, distinct criteria as can be compared from the provided snapshots, extract and compare ALL of them so the user gets a 100% complete, granular side-by-side evaluation.
 7. Give extra importance to USER_GOAL when supplied. Align the "bestOverall" recommendation and criteria weighting to this goal.
 8. Normalize information where safe (e.g. 1 TB and 1000 GB, or Tk 75,000 and 75,000 BDT may be formatted consistently).
 9. Do NOT make unsafe conversions or speculative assumptions.
@@ -158,7 +158,7 @@ REQUIRED JSON SCHEMA:
   ],
   "criteria": [
     {
-      "name": "Criterion name (e.g. 'Price', 'Processor', 'RAM', 'Storage', 'Display', 'Warranty')",
+      "name": "Criterion name (e.g. 'Price', 'Processor', 'RAM', 'Storage', 'Display', 'Warranty', 'Cancellation Policy', 'Breakfast Included', 'Free WiFi', etc.)",
       "importance": "high | medium | low",
       "values": [
         {
@@ -226,7 +226,7 @@ PROMPT;
         }
 
         $prompt .= "=== END PAGE SNAPSHOTS ===\n\n";
-        $prompt .= "Generate the complete evidence-based comparison JSON now. Remember: if any spec is missing, write 'Not stated'.";
+        $prompt .= "Generate the complete evidence-based comparison JSON now. Extract ALL comparable criteria available across these items (if there are 10 criteria, return 10; if 20 or 25 exist, return all 20 or 25 — do NOT cap or limit the number of criteria). Remember: if any spec is missing for a specific item, write 'Not stated'.";
 
         return $prompt;
     }
@@ -428,16 +428,29 @@ PROMPT;
             || str_contains($allText, 'responsibilities') || str_contains($allText, 'full-time');
 
         if ($isHotel) {
-            $comparisonType = 'Hotels';
+            $comparisonType = 'Hotels & Accommodations';
             $attributesToScan = [
                 'Price per night' => 'high',
                 'Guest Rating' => 'high',
-                'Location' => 'medium',
+                'Location / Distance' => 'medium',
+                'Room Types & Beds' => 'high',
                 'Free WiFi' => 'medium',
-                'Swimming Pool' => 'medium',
                 'Breakfast' => 'medium',
+                'Swimming Pool' => 'medium',
+                'Air Conditioning' => 'medium',
                 'Check-in / Check-out' => 'low',
-                'Amenities' => 'medium',
+                'Cancellation Policy' => 'high',
+                'Airport Shuttle' => 'medium',
+                'Parking' => 'medium',
+                'Fitness Center / Gym' => 'medium',
+                'Spa & Wellness' => 'medium',
+                'Restaurant & Dining' => 'medium',
+                'Bar / Lounge' => 'low',
+                'Front Desk / Reception' => 'low',
+                'Room Amenities' => 'medium',
+                'Child & Extra Bed Policy' => 'low',
+                'Pet Policy' => 'low',
+                'Payment Options' => 'low',
             ];
         } elseif ($isCourse) {
             $comparisonType = 'Online Courses';
@@ -448,6 +461,8 @@ PROMPT;
                 'Certificate' => 'medium',
                 'Instructor / Institution' => 'medium',
                 'Rating' => 'high',
+                'Prerequisites' => 'medium',
+                'Language' => 'low',
             ];
         } elseif ($isJob) {
             $comparisonType = 'Job Offers';
@@ -457,6 +472,7 @@ PROMPT;
                 'Location / Remote' => 'high',
                 'Experience Required' => 'medium',
                 'Benefits' => 'medium',
+                'Responsibilities' => 'medium',
             ];
         } else {
             $comparisonType = 'Gadgets & Products';
@@ -466,9 +482,12 @@ PROMPT;
                 'RAM' => 'high',
                 'Storage' => 'high',
                 'Display' => 'medium',
+                'Graphics / GPU' => 'medium',
                 'Camera' => 'medium',
                 'Battery' => 'medium',
                 'Weight' => 'medium',
+                'Operating System' => 'medium',
+                'Connectivity & Ports' => 'medium',
                 'Warranty' => 'medium',
             ];
         }
@@ -512,9 +531,19 @@ PROMPT;
                     break;
 
                 case 'Location':
+                case 'Location / Distance':
                 case 'Location / Remote':
-                    if (preg_match('/(?:location|located in|address)\s*[:=|]?\s*([^\n\r|,]{3,45})/i', $text, $m)) {
+                    if (preg_match('/(?:location|located in|address|distance to)\s*[:=|]?\s*([^\n\r|,]{3,55})/i', $text, $m)) {
                         return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    break;
+
+                case 'Room Types & Beds':
+                    if (preg_match('/(?:room type|bed type|bed configuration|room info)\s*[:=|]?\s*([^\n\r|,]{3,50})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    if (preg_match('/(?:deluxe|standard|suite|superior|executive|king bed|queen bed|twin beds|double room|single room)[^\n\r|,]{0,35}/i', $text, $m)) {
+                        return trim($m[0]);
                     }
                     break;
 
@@ -524,34 +553,105 @@ PROMPT;
                     }
                     break;
 
-                case 'Swimming Pool':
-                    if (preg_match('/(?:outdoor\s+pool|indoor\s+pool|swimming\s+pool|infinity\s+pool)/i', $text, $m)) {
+                case 'Breakfast':
+                    if (preg_match('/(?:free\s+breakfast|breakfast\s+included|buffet\s+breakfast|continental\s+breakfast)/i', $text, $m)) {
                         return trim($m[0]);
                     }
                     break;
 
-                case 'Breakfast':
-                    if (preg_match('/(?:free\s+breakfast|breakfast\s+included|buffet\s+breakfast)/i', $text, $m)) {
+                case 'Swimming Pool':
+                    if (preg_match('/(?:outdoor\s+pool|indoor\s+pool|swimming\s+pool|infinity\s+pool|rooftop\s+pool)/i', $text, $m)) {
                         return trim($m[0]);
+                    }
+                    break;
+
+                case 'Air Conditioning':
+                    if (preg_match('/(?:air[- ]conditioning|air[- ]conditioned|a\/c|climate control)/i', $text)) {
+                        return 'Yes (Air Conditioned)';
                     }
                     break;
 
                 case 'Check-in / Check-out':
-                    if (preg_match('/(?:check-?in)\s*(?:from|at)?\s*([0-9]{1,2}:[0-9]{2}[^\n\r|,]{0,25})/i', $text, $m)) {
+                    if (preg_match('/(?:check-?in)\s*(?:from|at)?\s*([0-9]{1,2}:[0-9]{2}[^\n\r|,]{0,35})/i', $text, $m)) {
                         return 'Check-in ' . trim($m[1]);
                     }
                     break;
 
-                case 'Amenities':
-                case 'Benefits':
-                    $amenities = [];
-                    if (preg_match('/(?:fitness|gym)/i', $text)) $amenities[] = 'Fitness/Gym';
-                    if (preg_match('/(?:spa|wellness)/i', $text)) $amenities[] = 'Spa/Wellness';
-                    if (preg_match('/(?:parking)/i', $text)) $amenities[] = 'Parking';
-                    if (preg_match('/(?:airport shuttle|shuttle)/i', $text)) $amenities[] = 'Airport Shuttle';
-                    if (preg_match('/(?:restaurant|dining)/i', $text)) $amenities[] = 'Restaurant';
-                    if (!empty($amenities)) {
-                        return implode(', ', $amenities);
+                case 'Cancellation Policy':
+                    if (preg_match('/(?:free\s+cancellation|cancellation\s*:\s*[^\n\r|,]{3,40}|refundable|non-refundable)/i', $text, $m)) {
+                        return trim($m[0]);
+                    }
+                    break;
+
+                case 'Airport Shuttle':
+                    if (preg_match('/(?:free\s+airport\s+shuttle|airport\s+shuttle\s*\(free\)|airport\s+shuttle\s*\(additional\s+charge\)|airport\s+shuttle)/i', $text, $m)) {
+                        return trim($m[0]);
+                    }
+                    break;
+
+                case 'Parking':
+                    if (preg_match('/(?:free\s+parking|private\s+parking|valet\s+parking|on-site\s+parking|parking\s+available)/i', $text, $m)) {
+                        return trim($m[0]);
+                    }
+                    break;
+
+                case 'Fitness Center / Gym':
+                    if (preg_match('/(?:fitness\s+center|gym|fitness\s+room|workout\s+area)/i', $text, $m)) {
+                        return trim($m[0]);
+                    }
+                    break;
+
+                case 'Spa & Wellness':
+                    if (preg_match('/(?:spa\s+and\s+wellness|spa\s+center|massage|sauna|steam\s+room)/i', $text, $m)) {
+                        return trim($m[0]);
+                    }
+                    break;
+
+                case 'Restaurant & Dining':
+                    if (preg_match('/(?:restaurant|on-site\s+dining|room\s+service|cafe|bar & grill)/i', $text, $m)) {
+                        return trim($m[0]);
+                    }
+                    break;
+
+                case 'Bar / Lounge':
+                    if (preg_match('/(?:bar|lounge|cocktail\s+bar|poolside\s+bar)/i', $text, $m)) {
+                        return trim($m[0]);
+                    }
+                    break;
+
+                case 'Front Desk / Reception':
+                    if (preg_match('/(?:24-hour\s+front\s+desk|24\/7\s+front\s+desk|concierge\s+service)/i', $text, $m)) {
+                        return trim($m[0]);
+                    }
+                    break;
+
+                case 'Room Amenities':
+                    $ramen = [];
+                    if (preg_match('/(?:balcony|terrace)/i', $text)) $ramen[] = 'Balcony/Terrace';
+                    if (preg_match('/(?:flat-screen\s+tv|smart\s+tv)/i', $text)) $ramen[] = 'Flat-screen TV';
+                    if (preg_match('/(?:electric\s+kettle|coffee\s+machine)/i', $text)) $ramen[] = 'Tea/Coffee Maker';
+                    if (preg_match('/(?:mini-?bar|refrigerator)/i', $text)) $ramen[] = 'Minibar/Fridge';
+                    if (preg_match('/(?:safety\s+deposit\s+box|in-room\s+safe)/i', $text)) $ramen[] = 'Safe';
+                    if (!empty($ramen)) {
+                        return implode(', ', $ramen);
+                    }
+                    break;
+
+                case 'Child & Extra Bed Policy':
+                    if (preg_match('/(?:crib|extra\s+bed|children\s+welcome|all\s+children\s+are\s+welcome)[^\n\r|,]{0,40}/i', $text, $m)) {
+                        return trim($m[0]);
+                    }
+                    break;
+
+                case 'Pet Policy':
+                    if (preg_match('/(?:pets\s+allowed|pets\s+are\s+not\s+allowed|pet-friendly|no\s+pets\s+allowed)/i', $text, $m)) {
+                        return trim($m[0]);
+                    }
+                    break;
+
+                case 'Payment Options':
+                    if (preg_match('/(?:visa|mastercard|cash|american\s+express|bkash|credit\s+cards\s+accepted)/i', $text, $m)) {
+                        return 'Cards/Electronic accepted';
                     }
                     break;
 
@@ -571,6 +671,55 @@ PROMPT;
                 case 'Certificate':
                     if (preg_match('/(?:shareable certificate|certificate of completion|earn a certificate)/i', $text)) {
                         return 'Certificate Included';
+                    }
+                    break;
+
+                case 'Instructor / Institution':
+                    if (preg_match('/(?:instructor|offered by|institution|university)\s*[:=|]?\s*([^\n\r|,]{3,45})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    break;
+
+                case 'Prerequisites':
+                    if (preg_match('/(?:prerequisite|requirements)\s*[:=|]?\s*([^\n\r|,]{3,50})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    break;
+
+                case 'Language':
+                    if (preg_match('/(?:language|taught in)\s*[:=|]?\s*([A-Za-z]+)/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                // Job specific
+                case 'Salary / Compensation':
+                    if (preg_match('/(?:salary|compensation|pay rate)\s*[:=|]?\s*([^\n\r|,]{3,45})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    break;
+
+                case 'Job Type':
+                    if (preg_match('/(?:full-?time|part-?time|contract|internship)/i', $text, $m)) {
+                        return ucfirst(trim($m[0]));
+                    }
+                    break;
+
+                case 'Experience Required':
+                    if (preg_match('/([0-9]+\+?\s*(?:to\s*[0-9]+\s*)?years?(?:\s*of\s*experience)?)/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                case 'Benefits':
+                    if (preg_match('/(?:health\s+insurance|dental|401k|paid\s+time\s+off|remote\s+work)/i', $text, $m)) {
+                        return trim($m[0]);
+                    }
+                    break;
+
+                case 'Responsibilities':
+                    if (preg_match('/(?:responsibilities|duties)\s*[:=|]?\s*([^\n\r|]{5,60})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
                     }
                     break;
 
@@ -602,14 +751,38 @@ PROMPT;
                     }
                     break;
 
+                case 'Graphics / GPU':
+                    if (preg_match('/(?:graphics|gpu)\s*[:=|]?\s*([^\n\r|,]{3,45})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    break;
+
                 case 'Battery':
                     if (preg_match('/(?:battery)\s*[:=|]?\s*([^\n\r|]{0,15}[0-9]+\s*(?:mah|wh|whrs|cell)[^\n\r|,]{0,25})/i', $text, $m)) {
                         return trim($m[1], " \t\n\r\0\x0B|");
                     }
                     break;
 
+                case 'Camera':
+                    if (preg_match('/(?:camera|webcam)\s*[:=|]?\s*([^\n\r|,]{3,45})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    break;
+
                 case 'Weight':
                     if (preg_match('/(?:weight)\s*[:=|]?\s*([0-9]+(?:\.[0-9]+)?\s*(?:kg|g|lbs)[^\n\r|,]{0,20})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    break;
+
+                case 'Operating System':
+                    if (preg_match('/(?:operating\s+system|os)\s*[:=|]?\s*([^\n\r|,]{3,35})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    break;
+
+                case 'Connectivity & Ports':
+                    if (preg_match('/(?:ports|connectivity)\s*[:=|]?\s*([^\n\r|,]{3,50})/i', $text, $m)) {
                         return trim($m[1], " \t\n\r\0\x0B|");
                     }
                     break;

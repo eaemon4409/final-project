@@ -65,7 +65,7 @@ class OpenRouterProvider implements IAIProvider
                 'type' => 'json_object',
             ],
             'temperature' => 0.1,
-            'max_tokens' => 4096,
+            'max_tokens' => 8192,
         ]);
 
         if ($response->status() === 429) {

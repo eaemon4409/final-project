@@ -110,16 +110,19 @@ export function extractPageFromDOM(): {
     }
   });
 
-  // Priority 2: Specification definition lists, key-value sections, hotel amenities, highlights
+  // Priority 2: Specification definition lists, key-value sections, hotel amenities, highlights, policies
   const specTexts: string[] = [];
   clone.querySelectorAll(
     'dl, .specification, .specs, .specifications, .attributes, .product-info, ' +
     '.hotel-facilities, .facilities, .amenities, .property-highlights, ' +
     '[data-testid="property-highlights"], [data-testid*="facilities"], ' +
-    '.property-description, .room-info, .important_facility, .kpi-feature'
+    '.property-description, .room-info, .important_facility, .kpi-feature, ' +
+    '[data-testid="policies-list"], .hp-policies, .hotel-policies, .room-amenities, ' +
+    '.room-features, [data-testid="review-subscores"], .review-score, ' +
+    '.hotel-description, .property-amenities, .hotel_facilities_block'
   ).forEach(sec => {
     const text = sec.textContent?.replace(/\s+/g, ' ').trim();
-    if (text && text.length > 10 && text.length < 3000) {
+    if (text && text.length > 10 && text.length < 3500) {
       specTexts.push(text);
     }
   });
@@ -141,7 +144,7 @@ export function extractPageFromDOM(): {
           items.push(`• ${item}`);
         }
       });
-      if (items.length > 0 && items.length <= 30) {
+      if (items.length > 0 && items.length <= 50) {
         headingListTexts.push(items.join('\n'));
       }
     }
@@ -172,7 +175,7 @@ export function extractPageFromDOM(): {
   }
 
   if (paraTexts.length > 0) {
-    sections.push('--- SUMMARY TEXT ---\n' + paraTexts.slice(0, 8).join('\n'));
+    sections.push('--- SUMMARY TEXT ---\n' + paraTexts.slice(0, 15).join('\n'));
   }
 
   // Fallback to body text if no structured content found
@@ -181,8 +184,8 @@ export function extractPageFromDOM(): {
     rawContent = (clone.textContent || '').replace(/\s+/g, ' ').trim();
   }
 
-  // Truncate cleanly up to ~6,000 characters
-  const maxChars = 6000;
+  // Truncate cleanly up to ~10,000 characters
+  const maxChars = 10000;
   let importantText = rawContent;
   if (importantText.length > maxChars) {
     // Intelligent truncation at sentence boundary
