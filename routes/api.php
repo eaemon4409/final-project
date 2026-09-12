@@ -27,6 +27,24 @@ Route::prefix('v1')->group(function () {
         ]);
     });
 
+    Route::get('/test-ai', function () {
+        try {
+            $provider = new \App\Services\AI\GroqProvider();
+            $res = $provider->compare([
+                'systemPrompt' => 'You are a test. Return JSON: {"test":"ok"}',
+                'userPrompt' => 'Test',
+            ]);
+            return response()->json(['status' => 'success', 'result' => $res]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+                'class' => get_class($e),
+                'file' => $e->getFile() . ':' . $e->getLine(),
+            ], 500);
+        }
+    });
+
     // Core Comparison Endpoint (Protected by Rate Limiter)
     Route::post('/compare', [ComparisonController::class, 'compare'])
         ->middleware(CompareRateLimiter::class);
