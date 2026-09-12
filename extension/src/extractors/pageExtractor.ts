@@ -59,7 +59,7 @@ export function extractPageFromDOM(): {
       }
     });
     if (ldObjects.length > 0) {
-      structuredData = JSON.stringify(ldObjects).slice(0, 1500);
+      structuredData = JSON.stringify(ldObjects).slice(0, 3000);
     }
   } catch {
     // Ignore error
@@ -91,7 +91,7 @@ export function extractPageFromDOM(): {
     }
   });
 
-  // Priority 1: Tables (Specification tables, comparison charts, pricing tables)
+  // Priority 1: Tables (Specification tables, comparison charts, pricing tables, room tables)
   const tableTexts: string[] = [];
   clone.querySelectorAll('table').forEach(tbl => {
     const rows: string[] = [];
@@ -110,11 +110,16 @@ export function extractPageFromDOM(): {
     }
   });
 
-  // Priority 2: Specification definition lists & key-value sections
+  // Priority 2: Specification definition lists, key-value sections, hotel amenities, highlights
   const specTexts: string[] = [];
-  clone.querySelectorAll('dl, .specification, .specs, .specifications, .attributes, .product-info').forEach(sec => {
+  clone.querySelectorAll(
+    'dl, .specification, .specs, .specifications, .attributes, .product-info, ' +
+    '.hotel-facilities, .facilities, .amenities, .property-highlights, ' +
+    '[data-testid="property-highlights"], [data-testid*="facilities"], ' +
+    '.property-description, .room-info, .important_facility, .kpi-feature'
+  ).forEach(sec => {
     const text = sec.textContent?.replace(/\s+/g, ' ').trim();
-    if (text && text.length > 10 && text.length < 2000) {
+    if (text && text.length > 10 && text.length < 3000) {
       specTexts.push(text);
     }
   });
@@ -132,11 +137,11 @@ export function extractPageFromDOM(): {
       const items: string[] = [];
       el.querySelectorAll('li').forEach(li => {
         const item = li.textContent?.replace(/\s+/g, ' ').trim();
-        if (item && item.length > 2 && item.length < 200) {
+        if (item && item.length > 2 && item.length < 250) {
           items.push(`• ${item}`);
         }
       });
-      if (items.length > 0 && items.length <= 15) {
+      if (items.length > 0 && items.length <= 30) {
         headingListTexts.push(items.join('\n'));
       }
     }
@@ -146,7 +151,7 @@ export function extractPageFromDOM(): {
   const paraTexts: string[] = [];
   clone.querySelectorAll('p').forEach(p => {
     const txt = p.textContent?.replace(/\s+/g, ' ').trim();
-    if (txt && txt.length > 25 && txt.length < 500) {
+    if (txt && txt.length > 25 && txt.length < 600) {
       paraTexts.push(txt);
     }
   });
@@ -167,7 +172,7 @@ export function extractPageFromDOM(): {
   }
 
   if (paraTexts.length > 0) {
-    sections.push('--- SUMMARY TEXT ---\n' + paraTexts.slice(0, 6).join('\n'));
+    sections.push('--- SUMMARY TEXT ---\n' + paraTexts.slice(0, 8).join('\n'));
   }
 
   // Fallback to body text if no structured content found
@@ -176,8 +181,8 @@ export function extractPageFromDOM(): {
     rawContent = (clone.textContent || '').replace(/\s+/g, ' ').trim();
   }
 
-  // Truncate cleanly up to ~3,500 characters
-  const maxChars = 3500;
+  // Truncate cleanly up to ~6,000 characters
+  const maxChars = 6000;
   let importantText = rawContent;
   if (importantText.length > maxChars) {
     // Intelligent truncation at sentence boundary

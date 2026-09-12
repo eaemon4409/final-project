@@ -135,7 +135,7 @@ CRITICAL RULES:
 3. If information is unavailable or unmentioned on a page, strictly return "Not stated" or null.
 4. NEVER invent prices, specifications, ratings, benefits, dimensions, dates, policies, battery life, or features.
 5. Identify what type of items are being compared (e.g., Laptops, Phones, Job Offers, University Courses, SaaS Plans, Hotels, Services, Articles).
-6. Dynamically select 5 to 10 comparison criteria that are most useful for making a decision between these specific items.
+6. Dynamically extract all relevant comparison criteria (typically 8 to 16 criteria) covering every key aspect, feature, and factual detail available in the provided snapshots (such as pricing, ratings, core features, amenities, policies, location, inclusions, and specifications). Be thorough and comprehensive so the user gets a rich, complete side-by-side comparison of everything found on the pages.
 7. Give extra importance to USER_GOAL when supplied. Align the "bestOverall" recommendation and criteria weighting to this goal.
 8. Normalize information where safe (e.g. 1 TB and 1000 GB, or Tk 75,000 and 75,000 BDT may be formatted consistently).
 9. Do NOT make unsafe conversions or speculative assumptions.
