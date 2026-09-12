@@ -32,6 +32,19 @@ export const Popup: React.FC = () => {
   useEffect(() => {
     loadCurrentTab();
     refreshState();
+
+    const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }, area: string) => {
+      if (area === 'local' && changes['compare_anything_state']) {
+        refreshState();
+      }
+    };
+
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+      chrome.storage.onChanged.addListener(handleStorageChange);
+      return () => {
+        chrome.storage.onChanged.removeListener(handleStorageChange);
+      };
+    }
   }, []);
 
   const loadCurrentTab = async () => {

@@ -13,6 +13,23 @@
     "http://localhost:8000/*",
     "https://*.onrender.com/*"
   ],
+  "background": {
+    "service_worker": "assets/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content-loader.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*", "content-loader.js"],
+      "matches": ["http://*/*", "https://*/*"]
+    }
+  ],
   "action": {
     "default_popup": "index.html",
     "default_icon": {
