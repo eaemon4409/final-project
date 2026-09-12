@@ -11,9 +11,18 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [affiliate, setAffiliate] = useState<AffiliateConfig>({
     amazonTag: '',
-    darazAffiliateId: '',
     ebayCampId: '',
     aliexpressTag: '',
+    walmartId: '',
+    bestbuyId: '',
+    targetId: '',
+    neweggId: '',
+    darazAffiliateId: '',
+    flipkartAffId: '',
+    bookingAid: '',
+    agodaCid: '',
+    courseraPartnerId: '',
+    udemyPartnerId: '',
     genericRefTag: '',
   });
   const [apiUrl, setApiUrl] = useState<string>('');
@@ -24,9 +33,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       initAffiliateConfig().then((cfg) => {
         setAffiliate({
           amazonTag: cfg.amazonTag || '',
-          darazAffiliateId: cfg.darazAffiliateId || '',
           ebayCampId: cfg.ebayCampId || '',
           aliexpressTag: cfg.aliexpressTag || '',
+          walmartId: cfg.walmartId || '',
+          bestbuyId: cfg.bestbuyId || '',
+          targetId: cfg.targetId || '',
+          neweggId: cfg.neweggId || '',
+          darazAffiliateId: cfg.darazAffiliateId || '',
+          flipkartAffId: cfg.flipkartAffId || '',
+          bookingAid: cfg.bookingAid || '',
+          agodaCid: cfg.agodaCid || '',
+          courseraPartnerId: cfg.courseraPartnerId || '',
+          udemyPartnerId: cfg.udemyPartnerId || '',
           genericRefTag: cfg.genericRefTag || '',
         });
       });
@@ -56,7 +74,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         <div className="modal-header">
           <div className="modal-title-row">
             <DollarSign size={18} className="modal-icon-gold" />
-            <h3>Monetization & API Settings</h3>
+            <h3>Affiliate & API Settings</h3>
           </div>
           <button className="btn-close-modal" onClick={onClose} aria-label="Close">
             <X size={16} />
@@ -65,14 +83,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
         <div className="modal-body">
           <p className="settings-desc">
-            Configure your affiliate tags to earn commission whenever users click product links on the comparison page.
+            Configure your affiliate tags to earn commissions whenever users click product links on comparison pages.
           </p>
+
+          {/* Section 1: Major Global Retail */}
+          <div className="settings-section-title">Major Global Retailers</div>
 
           <div className="settings-field">
             <label>Amazon Associates Tag</label>
             <input
               type="text"
-              placeholder="e.g. yourtag-20"
+              placeholder="e.g. eaemon-20"
               value={affiliate.amazonTag}
               onChange={(e) => setAffiliate({ ...affiliate, amazonTag: e.target.value })}
             />
@@ -94,15 +115,62 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             <label>AliExpress Affiliate Tag / Key</label>
             <input
               type="text"
-              placeholder="e.g. your_sk_or_tag"
+              placeholder="e.g. your_sk_tag"
               value={affiliate.aliexpressTag}
               onChange={(e) => setAffiliate({ ...affiliate, aliexpressTag: e.target.value })}
             />
-            <span className="field-hint">Appended as <code>?aff_platform=...&sk=...</code> on AliExpress links</span>
+            <span className="field-hint">Appended as <code>?aff_platform=...&sk=...</code> on AliExpress</span>
           </div>
 
           <div className="settings-field">
-            <label>Daraz Affiliate ID / Source</label>
+            <label>Walmart Affiliate Partner ID</label>
+            <input
+              type="text"
+              placeholder="e.g. your_impact_partner_id"
+              value={affiliate.walmartId}
+              onChange={(e) => setAffiliate({ ...affiliate, walmartId: e.target.value })}
+            />
+            <span className="field-hint">Appended as <code>?wmlspartner=...&veh=aff</code> on Walmart</span>
+          </div>
+
+          <div className="settings-field">
+            <label>Best Buy Affiliate Tag / ID</label>
+            <input
+              type="text"
+              placeholder="e.g. your_bestbuy_id"
+              value={affiliate.bestbuyId}
+              onChange={(e) => setAffiliate({ ...affiliate, bestbuyId: e.target.value })}
+            />
+            <span className="field-hint">Appended as <code>?ref=...&loc=compare_anything</code> on Best Buy</span>
+          </div>
+
+          <div className="settings-field">
+            <label>Target Partners ID</label>
+            <input
+              type="text"
+              placeholder="e.g. your_target_id"
+              value={affiliate.targetId}
+              onChange={(e) => setAffiliate({ ...affiliate, targetId: e.target.value })}
+            />
+            <span className="field-hint">Appended as <code>?afid=...</code> on Target links</span>
+          </div>
+
+          <div className="settings-field">
+            <label>Newegg Affiliate ID</label>
+            <input
+              type="text"
+              placeholder="e.g. your_newegg_id"
+              value={affiliate.neweggId}
+              onChange={(e) => setAffiliate({ ...affiliate, neweggId: e.target.value })}
+            />
+            <span className="field-hint">Appended as <code>?AID=...</code> on Newegg links</span>
+          </div>
+
+          {/* Section 2: Regional E-Commerce */}
+          <div className="settings-section-title">Regional E-Commerce</div>
+
+          <div className="settings-field">
+            <label>Daraz Affiliate ID (BD / South Asia)</label>
             <input
               type="text"
               placeholder="e.g. your_daraz_id"
@@ -112,7 +180,71 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             <span className="field-hint">Appended as <code>?aff_id=...</code> on Daraz links</span>
           </div>
 
+          <div className="settings-field">
+            <label>Flipkart Affiliate ID</label>
+            <input
+              type="text"
+              placeholder="e.g. your_flipkart_affid"
+              value={affiliate.flipkartAffId}
+              onChange={(e) => setAffiliate({ ...affiliate, flipkartAffId: e.target.value })}
+            />
+            <span className="field-hint">Appended as <code>?affid=...</code> on Flipkart links</span>
+          </div>
+
+          {/* Section 3: Hotels & Travel */}
+          <div className="settings-section-title">Hotels & Travel</div>
+
+          <div className="settings-field">
+            <label>Booking.com Affiliate Partner AID</label>
+            <input
+              type="text"
+              placeholder="e.g. your_booking_aid"
+              value={affiliate.bookingAid}
+              onChange={(e) => setAffiliate({ ...affiliate, bookingAid: e.target.value })}
+            />
+            <span className="field-hint">Appended as <code>?aid=...</code> on Booking.com hotel pages</span>
+          </div>
+
+          <div className="settings-field">
+            <label>Agoda Partner CID</label>
+            <input
+              type="text"
+              placeholder="e.g. your_agoda_cid"
+              value={affiliate.agodaCid}
+              onChange={(e) => setAffiliate({ ...affiliate, agodaCid: e.target.value })}
+            />
+            <span className="field-hint">Appended as <code>?cid=...</code> on Agoda links</span>
+          </div>
+
+          {/* Section 4: Courses & Online Learning */}
+          <div className="settings-section-title">Courses & Education</div>
+
+          <div className="settings-field">
+            <label>Coursera Partner Campaign / ID</label>
+            <input
+              type="text"
+              placeholder="e.g. your_coursera_partner"
+              value={affiliate.courseraPartnerId}
+              onChange={(e) => setAffiliate({ ...affiliate, courseraPartnerId: e.target.value })}
+            />
+            <span className="field-hint">Appended as <code>?utm_campaign=...</code> on Coursera links</span>
+          </div>
+
+          <div className="settings-field">
+            <label>Udemy Affiliate Code</label>
+            <input
+              type="text"
+              placeholder="e.g. your_udemy_code"
+              value={affiliate.udemyPartnerId}
+              onChange={(e) => setAffiliate({ ...affiliate, udemyPartnerId: e.target.value })}
+            />
+            <span className="field-hint">Appended as <code>?couponCode=...</code> on Udemy links</span>
+          </div>
+
           <div className="settings-divider" />
+
+          {/* Section 5: API Settings */}
+          <div className="settings-section-title">Backend API Settings</div>
 
           <div className="settings-field">
             <label>
