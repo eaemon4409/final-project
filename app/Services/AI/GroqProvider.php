@@ -15,14 +15,21 @@ class GroqProvider implements IAIProvider
 
     public function __construct(?string $apiKey = null, ?string $model = null, ?string $baseUrl = null, ?int $timeout = null)
     {
-        $this->apiKey = $apiKey ?? config('ai.groq.api_key', '');
-        $configuredModel = $model ?? config('ai.groq.model', 'openai/gpt-oss-120b');
+        $rawKey = (string) ($apiKey ?? config('ai.groq.api_key', ''));
+        $this->apiKey = trim(preg_replace('/[\r\n\t]+/', '', $rawKey));
+
+        $configuredModel = (string) ($model ?? config('ai.groq.model', 'openai/gpt-oss-120b'));
+        $configuredModel = trim(preg_replace('/[\r\n\t]+/', '', $configuredModel));
+
         // If an obsolete/unavailable model like llama-3.3-70b-versatile was configured in env, default to active Groq model
         if (empty($configuredModel) || str_contains($configuredModel, 'llama-3.3-70b-versatile')) {
             $configuredModel = 'openai/gpt-oss-120b';
         }
         $this->model = $configuredModel;
-        $this->baseUrl = rtrim($baseUrl ?? config('ai.groq.base_url', 'https://api.groq.com/openai/v1'), '/');
+
+        $rawBaseUrl = (string) ($baseUrl ?? config('ai.groq.base_url', 'https://api.groq.com/openai/v1'));
+        $this->baseUrl = trim(preg_replace('/[\r\n\t]+/', '', rtrim($rawBaseUrl, '/')));
+
         $this->timeout = $timeout ?? config('ai.groq.timeout', 45);
     }
 

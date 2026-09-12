@@ -14,9 +14,15 @@ class OpenRouterProvider implements IAIProvider
 
     public function __construct(?string $apiKey = null, ?string $model = null, ?string $baseUrl = null, ?int $timeout = null)
     {
-        $this->apiKey = $apiKey ?? config('ai.openrouter.api_key', '');
-        $this->model = $model ?? config('ai.openrouter.model', 'meta-llama/llama-3.3-70b-instruct');
-        $this->baseUrl = rtrim($baseUrl ?? config('ai.openrouter.base_url', 'https://openrouter.ai/api/v1'), '/');
+        $rawKey = (string) ($apiKey ?? config('ai.openrouter.api_key', ''));
+        $this->apiKey = trim(preg_replace('/[\r\n\t]+/', '', $rawKey));
+
+        $rawModel = (string) ($model ?? config('ai.openrouter.model', 'meta-llama/llama-3.3-70b-instruct'));
+        $this->model = trim(preg_replace('/[\r\n\t]+/', '', $rawModel));
+
+        $rawBaseUrl = (string) ($baseUrl ?? config('ai.openrouter.base_url', 'https://openrouter.ai/api/v1'));
+        $this->baseUrl = trim(preg_replace('/[\r\n\t]+/', '', rtrim($rawBaseUrl, '/')));
+
         $this->timeout = $timeout ?? config('ai.openrouter.timeout', 45);
     }
 
