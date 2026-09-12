@@ -6,12 +6,16 @@
 export interface AffiliateConfig {
   amazonTag?: string;
   darazAffiliateId?: string;
+  ebayCampId?: string;
+  aliexpressTag?: string;
   genericRefTag?: string;
 }
 
 const DEFAULT_CONFIG: AffiliateConfig = {
   amazonTag: 'eaemon-20', // Emon Ahmed's verified Amazon Associates Tag
   darazAffiliateId: 'compareanything', // Replace with Daraz Affiliate ID once approved
+  ebayCampId: '5339000000', // eBay Partner Network (EPN) Campaign ID
+  aliexpressTag: 'compareanything', // AliExpress Affiliate Tag / ID
   genericRefTag: 'eaemon',
 };
 
@@ -83,14 +87,34 @@ export function buildAffiliateUrl(originalUrl: string, config: AffiliateConfig =
       return urlObj.toString();
     }
 
-    // 3. AliExpress
-    if (hostname.includes('aliexpress.')) {
-      urlObj.searchParams.set('aff_platform', 'true');
-      urlObj.searchParams.set('sk', config.genericRefTag || 'compareanything');
+    // 3. eBay Domains (ebay.com, ebay.co.uk, ebay.de, ebay.ca, ebay.com.au, etc.)
+    if (hostname.includes('ebay.')) {
+      const campId = config.ebayCampId || DEFAULT_CONFIG.ebayCampId;
+      if (campId) {
+        urlObj.searchParams.set('mkcid', '1');
+        urlObj.searchParams.set('mkrid', '711-53200-19255-0');
+        urlObj.searchParams.set('siteid', '0');
+        urlObj.searchParams.set('campid', campId);
+        urlObj.searchParams.set('customid', config.genericRefTag || 'compareanything');
+        urlObj.searchParams.set('toolid', '10001');
+        urlObj.searchParams.set('mkevt', '1');
+      }
       return urlObj.toString();
     }
 
-    // 4. Star Tech, Ryans, Tech Retailers & General Stores
+    // 4. AliExpress Domains (aliexpress.com, aliexpress.us, etc.)
+    if (hostname.includes('aliexpress.')) {
+      const aliTag = config.aliexpressTag || DEFAULT_CONFIG.aliexpressTag;
+      if (aliTag) {
+        urlObj.searchParams.set('aff_platform', 'portals-tool');
+        urlObj.searchParams.set('sk', aliTag);
+        urlObj.searchParams.set('aff_trace_key', aliTag);
+        urlObj.searchParams.set('sub_id', config.genericRefTag || 'compareanything');
+      }
+      return urlObj.toString();
+    }
+
+    // 5. Star Tech, Ryans, Tech Retailers & General Stores
     if (
       hostname.includes('startech.') ||
       hostname.includes('ryans.') ||
@@ -121,6 +145,8 @@ export function getRetailerCta(domain: string): string {
   const d = domain.toLowerCase();
   if (d.includes('amazon')) return 'Check Price on Amazon';
   if (d.includes('daraz')) return 'Check Price on Daraz';
+  if (d.includes('ebay')) return 'Check Price on eBay';
+  if (d.includes('aliexpress')) return 'Check Price on AliExpress';
   if (d.includes('startech')) return 'View on Star Tech';
   if (d.includes('ryans')) return 'View on Ryans';
   if (d.includes('coursera') || d.includes('udemy')) return 'Enroll / View Course';

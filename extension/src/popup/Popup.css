@@ -688,6 +688,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 11px;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .settings-desc {

@@ -12,6 +12,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const [affiliate, setAffiliate] = useState<AffiliateConfig>({
     amazonTag: '',
     darazAffiliateId: '',
+    ebayCampId: '',
+    aliexpressTag: '',
     genericRefTag: '',
   });
   const [apiUrl, setApiUrl] = useState<string>('');
@@ -23,6 +25,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         setAffiliate({
           amazonTag: cfg.amazonTag || '',
           darazAffiliateId: cfg.darazAffiliateId || '',
+          ebayCampId: cfg.ebayCampId || '',
+          aliexpressTag: cfg.aliexpressTag || '',
           genericRefTag: cfg.genericRefTag || '',
         });
       });
@@ -73,6 +77,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               onChange={(e) => setAffiliate({ ...affiliate, amazonTag: e.target.value })}
             />
             <span className="field-hint">Appended as <code>?tag=yourtag-20</code> on Amazon links</span>
+          </div>
+
+          <div className="settings-field">
+            <label>eBay Campaign ID (EPN)</label>
+            <input
+              type="text"
+              placeholder="e.g. 5339000000"
+              value={affiliate.ebayCampId}
+              onChange={(e) => setAffiliate({ ...affiliate, ebayCampId: e.target.value })}
+            />
+            <span className="field-hint">Appended as <code>?campid=...&mkcid=1</code> on eBay links</span>
+          </div>
+
+          <div className="settings-field">
+            <label>AliExpress Affiliate Tag / Key</label>
+            <input
+              type="text"
+              placeholder="e.g. your_sk_or_tag"
+              value={affiliate.aliexpressTag}
+              onChange={(e) => setAffiliate({ ...affiliate, aliexpressTag: e.target.value })}
+            />
+            <span className="field-hint">Appended as <code>?aff_platform=...&sk=...</code> on AliExpress links</span>
           </div>
 
           <div className="settings-field">
