@@ -402,6 +402,10 @@ PROMPT;
      * High-fidelity evidence extraction fallback used when GROQ_API_KEY is not yet configured.
      * Extracts specifications, prices, and features directly from page snapshots.
      */
+    /**
+     * High-fidelity evidence extraction fallback used when AI provider is rate-limited or offline.
+     * Extracts specifications, prices, and features directly from page snapshots across multiple categories.
+     */
     protected function generateOfflineEvidenceComparison(array $pages, string $goal): array
     {
         $items = [];
@@ -409,28 +413,78 @@ PROMPT;
         $keyDiffs = [];
         $missing = [];
 
-        // Standard attributes to scan with multi-pattern and tabular support
-        $attributesToScan = [
-            'Price' => 'high',
-            'Processor' => 'high',
-            'RAM' => 'high',
-            'Storage' => 'high',
-            'Display' => 'medium',
-            'Camera' => 'medium',
-            'Battery' => 'medium',
-            'Weight' => 'medium',
-            'Warranty' => 'medium',
-        ];
+        // 1. Detect Category across compared pages
+        $allText = strtolower(implode(' ', array_map(function ($p) {
+            return ($p['title'] ?? '') . ' ' . ($p['domain'] ?? '') . ' ' . ($p['description'] ?? '') . ' ' . ($p['importantText'] ?? '') . ' ' . ($p['structuredData'] ?? '');
+        }, $pages)));
+
+        $isHotel = str_contains($allText, 'hotel') || str_contains($allText, 'resort') || str_contains($allText, 'booking.com')
+            || str_contains($allText, 'agoda') || str_contains($allText, 'night') || str_contains($allText, 'check-in');
+
+        $isCourse = str_contains($allText, 'course') || str_contains($allText, 'coursera') || str_contains($allText, 'udemy')
+            || str_contains($allText, 'curriculum') || str_contains($allText, 'instructor') || str_contains($allText, 'syllabus');
+
+        $isJob = str_contains($allText, 'job') || str_contains($allText, 'salary') || str_contains($allText, 'employment')
+            || str_contains($allText, 'responsibilities') || str_contains($allText, 'full-time');
+
+        if ($isHotel) {
+            $comparisonType = 'Hotels';
+            $attributesToScan = [
+                'Price per night' => 'high',
+                'Guest Rating' => 'high',
+                'Location' => 'medium',
+                'Free WiFi' => 'medium',
+                'Swimming Pool' => 'medium',
+                'Breakfast' => 'medium',
+                'Check-in / Check-out' => 'low',
+                'Amenities' => 'medium',
+            ];
+        } elseif ($isCourse) {
+            $comparisonType = 'Online Courses';
+            $attributesToScan = [
+                'Price / Tuition' => 'high',
+                'Duration' => 'medium',
+                'Skill Level' => 'medium',
+                'Certificate' => 'medium',
+                'Instructor / Institution' => 'medium',
+                'Rating' => 'high',
+            ];
+        } elseif ($isJob) {
+            $comparisonType = 'Job Offers';
+            $attributesToScan = [
+                'Salary / Compensation' => 'high',
+                'Job Type' => 'high',
+                'Location / Remote' => 'high',
+                'Experience Required' => 'medium',
+                'Benefits' => 'medium',
+            ];
+        } else {
+            $comparisonType = 'Gadgets & Products';
+            $attributesToScan = [
+                'Price' => 'high',
+                'Processor' => 'high',
+                'RAM' => 'high',
+                'Storage' => 'high',
+                'Display' => 'medium',
+                'Camera' => 'medium',
+                'Battery' => 'medium',
+                'Weight' => 'medium',
+                'Warranty' => 'medium',
+            ];
+        }
 
         $extractAttr = function (string $attrName, string $text, array $page): string {
             $val = 'Not stated';
 
             switch ($attrName) {
+                // Shared & Hotel Price
                 case 'Price':
+                case 'Price per night':
+                case 'Price / Tuition':
                     if (!empty($page['structuredData']) && preg_match('/["\']price["\']\s*:\s*["\']?([^"\'}\s,]+)/i', $page['structuredData'], $sm)) {
                         return trim($sm[1]);
                     }
-                    if (preg_match('/(?:price|special price|regular price|our price)\s*[:=|]?\s*([$€£৳]|tk\.?|bdt)?\s*([0-9,]+(?:\.[0-9]{1,2})?(?:\s*(?:tk|bdt|\$|€|£|৳|usd|eur))?)/i', $text, $m)) {
+                    if (preg_match('/(?:price|per night|nightly|special price|regular price|our price)\s*[:=|]?\s*([$€£৳]|tk\.?|bdt)?\s*([0-9,]+(?:\.[0-9]{1,2})?(?:\s*(?:tk|bdt|\$|€|£|৳|usd|eur|\/night|per night))?)/i', $text, $m)) {
                         $curr = trim($m[1] ?? '');
                         $num = trim($m[2] ?? '');
                         return trim("{$curr} {$num}");
@@ -446,6 +500,81 @@ PROMPT;
                     }
                     break;
 
+                // Hotel specific
+                case 'Guest Rating':
+                case 'Rating':
+                    if (preg_match('/(?:rating|score|reviewed?)\s*[:=|]?\s*([0-9]+(?:\.[0-9]+)?\s*(?:\/\s*10|\/\s*5|stars?|out of 10|out of 5)?)/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    if (preg_match('/\b([0-9]\.[0-9]\s*\/\s*10)\b/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                case 'Location':
+                case 'Location / Remote':
+                    if (preg_match('/(?:location|located in|address)\s*[:=|]?\s*([^\n\r|,]{3,45})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    break;
+
+                case 'Free WiFi':
+                    if (preg_match('/(?:free\s+wi-?fi|wi-?fi\s+included|complimentary\s+wi-?fi)/i', $text)) {
+                        return 'Yes (Free WiFi)';
+                    }
+                    break;
+
+                case 'Swimming Pool':
+                    if (preg_match('/(?:outdoor\s+pool|indoor\s+pool|swimming\s+pool|infinity\s+pool)/i', $text, $m)) {
+                        return trim($m[0]);
+                    }
+                    break;
+
+                case 'Breakfast':
+                    if (preg_match('/(?:free\s+breakfast|breakfast\s+included|buffet\s+breakfast)/i', $text, $m)) {
+                        return trim($m[0]);
+                    }
+                    break;
+
+                case 'Check-in / Check-out':
+                    if (preg_match('/(?:check-?in)\s*(?:from|at)?\s*([0-9]{1,2}:[0-9]{2}[^\n\r|,]{0,25})/i', $text, $m)) {
+                        return 'Check-in ' . trim($m[1]);
+                    }
+                    break;
+
+                case 'Amenities':
+                case 'Benefits':
+                    $amenities = [];
+                    if (preg_match('/(?:fitness|gym)/i', $text)) $amenities[] = 'Fitness/Gym';
+                    if (preg_match('/(?:spa|wellness)/i', $text)) $amenities[] = 'Spa/Wellness';
+                    if (preg_match('/(?:parking)/i', $text)) $amenities[] = 'Parking';
+                    if (preg_match('/(?:airport shuttle|shuttle)/i', $text)) $amenities[] = 'Airport Shuttle';
+                    if (preg_match('/(?:restaurant|dining)/i', $text)) $amenities[] = 'Restaurant';
+                    if (!empty($amenities)) {
+                        return implode(', ', $amenities);
+                    }
+                    break;
+
+                // Course specific
+                case 'Duration':
+                    if (preg_match('/(?:duration|approx\.?|takes)\s*[:=|]?\s*([0-9]+\s*(?:hours?|weeks?|months?)[^\n\r|,]{0,25})/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                case 'Skill Level':
+                    if (preg_match('/(?:beginner|intermediate|advanced|all levels)/i', $text, $m)) {
+                        return ucfirst(trim($m[0]));
+                    }
+                    break;
+
+                case 'Certificate':
+                    if (preg_match('/(?:shareable certificate|certificate of completion|earn a certificate)/i', $text)) {
+                        return 'Certificate Included';
+                    }
+                    break;
+
+                // Gadget specific
                 case 'Processor':
                     if (preg_match('/(?:processor|cpu|chipset)\s*[:=|]?\s*([^\n\r|]{3,50})/i', $text, $m)) {
                         return trim($m[1], " \t\n\r\0\x0B|");
@@ -459,20 +588,11 @@ PROMPT;
                     if (preg_match('/([0-9]+\s*gb\s*ram)/i', $text, $m)) {
                         return trim($m[1]);
                     }
-                    if (preg_match('/\|\s*(?:internal|memory)\s*\|\s*([^\n\r|]*[0-9]+\s*gb\s*ram[^\n\r|]*)/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
                     break;
 
                 case 'Storage':
                     if (preg_match('/(?:storage|ssd|hdd|drive|rom)\s*[:=|]?\s*([0-9]+\s*(?:gb|tb)(?:\s*(?:ssd|nvme|ufs[0-9.]*|emmc))?)/i', $text, $m)) {
                         return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    if (preg_match('/\|\s*internal\s*\|\s*([0-9]+\s*(?:gb|tb)[^\n\r|]{0,30})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    if (preg_match('/\b([0-9]+\s*(?:gb|tb))\s+(?:ssd|ufs|emmc|storage|rom)\b/i', $text, $m)) {
-                        return trim($m[1]);
                     }
                     break;
 
@@ -480,29 +600,11 @@ PROMPT;
                     if (preg_match('/(?:display|screen)\s*[:=|]?\s*([0-9]+(?:\.[0-9]+)?["\s]*(?:inch|inches|["”])?[^\n\r|,]{0,35})/i', $text, $m)) {
                         return trim($m[1], " \t\n\r\0\x0B|");
                     }
-                    if (preg_match('/\|\s*size\s*\|\s*([0-9]+(?:\.[0-9]+)?\s*inches[^\n\r|,]{0,25})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    if (preg_match('/\|\s*type\s*\|\s*([^\n\r|]*(?:amoled|oled|ips|lcd)[^\n\r|,]{0,25})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    break;
-
-                case 'Camera':
-                    if (preg_match('/(?:camera|main camera|triple|dual|single|quad)\s*[:=|]?\s*([0-9]+\s*mp[^\n\r|,]{0,30})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    if (preg_match('/\b([0-9]{2,3}\s*mp)\b/i', $text, $m)) {
-                        return trim($m[1]) . ' Main Camera';
-                    }
                     break;
 
                 case 'Battery':
                     if (preg_match('/(?:battery)\s*[:=|]?\s*([^\n\r|]{0,15}[0-9]+\s*(?:mah|wh|whrs|cell)[^\n\r|,]{0,25})/i', $text, $m)) {
                         return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    if (preg_match('/\b([0-9]{3,5}\s*mah)\b/i', $text, $m)) {
-                        return trim($m[1]);
                     }
                     break;
 
@@ -563,30 +665,52 @@ PROMPT;
             }
         }
 
-        // If Camera has "Not stated" across ALL pages, remove Camera from criteria to avoid noise
-        if (isset($criteriaMap['Camera'])) {
-            $allCameraNotStated = collect($criteriaMap['Camera']['values'])->every(fn($v) => $v['value'] === 'Not stated');
-            if ($allCameraNotStated) {
-                unset($criteriaMap['Camera']);
+        // CRITICAL ZERO-JUNK RULE:
+        // Remove ANY criterion where ALL compared pages have "Not stated"
+        // This guarantees hotels never show Processor/RAM/Battery, and phones never show Swimming Pool!
+        $validCriteriaMap = [];
+        foreach ($criteriaMap as $attrName => $criterion) {
+            $allNotStated = true;
+            foreach ($criterion['values'] as $v) {
+                if ($v['value'] !== 'Not stated') {
+                    $allNotStated = false;
+                    break;
+                }
+            }
+            if (!$allNotStated) {
+                $validCriteriaMap[] = $criterion;
             }
         }
 
-        // Build list of criteria
-        $criteria = array_values($criteriaMap);
+        // If all scanned attributes were unmentioned, provide a clean overview
+        if (empty($validCriteriaMap)) {
+            $validCriteriaMap[] = [
+                'name' => 'Page Overview',
+                'importance' => 'high',
+                'values' => array_map(fn($p) => [
+                    'itemId' => $p['id'],
+                    'value' => !empty($p['description']) ? substr($p['description'], 0, 80) : $p['title'],
+                    'confidence' => 'high',
+                ], $pages),
+                'winnerItemIds' => [],
+            ];
+        }
+
+        $criteria = $validCriteriaMap;
 
         $pageTitles = array_map(fn($p) => !empty($p['title']) ? $p['title'] : ($p['domain'] ?? 'Page'), $pages);
         $fullTitle = implode(' vs ', $pageTitles);
         $winnerId = $pages[0]['id'] ?? 'page-1';
 
         $keyDiffs[] = "Comparing {$fullTitle} across " . count($criteria) . " discovered criteria.";
-        $keyDiffs[] = "Full factual specifications extracted directly from provided page snapshots.";
+        $keyDiffs[] = "Factual specifications extracted strictly from page evidence without hallucination.";
         if (!empty($goal)) {
             $keyDiffs[] = "User stated priority: '{$goal}'.";
         }
 
         return [
             'comparisonTitle' => $fullTitle,
-            'comparisonType' => 'Web Comparison',
+            'comparisonType' => $comparisonType,
             'goal' => $goal,
             'items' => $items,
             'criteria' => $criteria,

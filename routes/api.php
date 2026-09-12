@@ -22,6 +22,7 @@ Route::prefix('v1')->group(function () {
             'version' => '1.0.0',
             'default_provider' => config('ai.default_provider', 'groq'),
             'groq_configured' => !empty(config('ai.groq.api_key')),
+            'groq_model' => config('ai.groq.model', 'openai/gpt-oss-120b'),
             'openrouter_configured' => !empty(config('ai.openrouter.api_key')),
         ]);
     });
