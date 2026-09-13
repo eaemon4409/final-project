@@ -182,29 +182,40 @@ export async function getFloatingButtonEnabled(): Promise<boolean> {
       }
     }
 
-    chrome.storage.local.get([STORAGE_KEY_SHOW_FAB], (result) => {
-      if (chrome.runtime && chrome.runtime.lastError) {
-        return resolve(true);
-      }
-      const val = result ? result[STORAGE_KEY_SHOW_FAB] : undefined;
-      resolve(val === false ? false : true);
-    });
+    try {
+      chrome.storage.local.get([STORAGE_KEY_SHOW_FAB], (result) => {
+        if (chrome.runtime && chrome.runtime.lastError) {
+          // If extension context was invalidated or errored, stay hidden for safety
+          return resolve(false);
+        }
+        const val = result ? result[STORAGE_KEY_SHOW_FAB] : undefined;
+        // Default to true on fresh install, otherwise respect explicitly saved boolean
+        resolve(val === false ? false : true);
+      });
+    } catch {
+      resolve(false);
+    }
   });
 }
 
 export async function setFloatingButtonEnabled(enabled: boolean): Promise<void> {
   return new Promise((resolve) => {
+    try {
+      localStorage.setItem(STORAGE_KEY_SHOW_FAB, String(enabled));
+    } catch {
+      // Ignore
+    }
+
     if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) {
-      try {
-        localStorage.setItem(STORAGE_KEY_SHOW_FAB, String(enabled));
-      } catch {
-        // Ignore
-      }
       return resolve();
     }
 
-    chrome.storage.local.set({ [STORAGE_KEY_SHOW_FAB]: enabled }, () => {
+    try {
+      chrome.storage.local.set({ [STORAGE_KEY_SHOW_FAB]: enabled }, () => {
+        resolve();
+      });
+    } catch {
       resolve();
-    });
+    }
   });
 }

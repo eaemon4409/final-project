@@ -156,9 +156,46 @@ export const Popup: React.FC = () => {
   };
 
   const handleToggleFab = async () => {
-    const next = !showFab;
+    const currentEnabled = await getFloatingButtonEnabled();
+    const next = !currentEnabled;
     setShowFab(next);
     await setFloatingButtonEnabled(next);
+
+    // 1. Broadcast to background worker
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+      chrome.runtime.sendMessage({ action: 'broadcastFloatingButtonState', enabled: next }, () => {
+        if (chrome.runtime && chrome.runtime.lastError) void chrome.runtime.lastError;
+      });
+    }
+
+    // 2. Broadcast directly to all open tabs from popup
+    if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.query) {
+      chrome.tabs.query({}, (tabs) => {
+        if (!tabs) return;
+        for (const tab of tabs) {
+          if (typeof tab.id === 'number') {
+            chrome.tabs.sendMessage(
+              tab.id,
+              { action: 'toggleFloatingButton', enabled: next },
+              () => {
+                if (chrome.runtime && chrome.runtime.lastError) void chrome.runtime.lastError;
+              }
+            );
+
+            // Direct scripting execution if turning off to immediately remove DOM element
+            if (!next && chrome.scripting && tab.id) {
+              chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: () => {
+                  const el = document.getElementById('compare-anything-fab-root');
+                  if (el) el.remove();
+                }
+              }).catch(() => {});
+            }
+          }
+        }
+      });
+    }
   };
 
   return (

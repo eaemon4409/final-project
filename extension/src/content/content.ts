@@ -11,9 +11,19 @@ import { normalizeUrl } from '../utils/urlHelper';
 import { PageSnapshot } from '../models/types';
 
 (function initCompareAnythingFab() {
-  // Prevent duplicate injection in the same frame
-  if (document.getElementById('compare-anything-fab-root')) {
+  // Never inject into iframes, only run in top-level browsing context
+  if (typeof window !== 'undefined' && window.self !== window.top) {
     return;
+  }
+
+  // Remove any stale/orphaned instance from a previous version or reload
+  const staleHost = document.getElementById('compare-anything-fab-root');
+  if (staleHost) {
+    try {
+      staleHost.remove();
+    } catch {
+      // Ignore
+    }
   }
 
   // Create host and attach Shadow DOM for 100% CSS style isolation
@@ -26,12 +36,25 @@ import { PageSnapshot } from '../models/types';
   host.style.pointerEvents = 'none'; // container does not block clicks elsewhere
   // Start initially hidden so it NEVER flashes or appears if disabled
   host.style.setProperty('display', 'none', 'important');
+  host.style.setProperty('visibility', 'hidden', 'important');
+  host.style.setProperty('opacity', '0', 'important');
+  host.setAttribute('hidden', '');
+  host.classList.add('fab-hidden');
 
   const shadow = host.attachShadow({ mode: 'open' });
 
   // Encapsulated CSS styles
   const style = document.createElement('style');
   style.textContent = `
+    :host([hidden]),
+    :host(.fab-hidden),
+    .fab-wrapper.fab-hidden {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -340,50 +363,89 @@ import { PageSnapshot } from '../models/types';
   shadow.appendChild(style);
   shadow.appendChild(wrapper);
 
-  const targetParent = document.body || document.documentElement;
-  targetParent.appendChild(host);
-
   // State trackers
   let isCurrentPageAdded = false;
   let currentPageId: string | null = null;
   let toastTimer: ReturnType<typeof setTimeout> | null = null;
+  let isFabGloballyEnabled = false;
 
   // Robust visibility setter that completely hides/shows all elements
   function setHostVisibility(visible: boolean) {
+    isFabGloballyEnabled = visible;
+
     if (!visible) {
+      // 1. Fully hide host element
       host.style.setProperty('display', 'none', 'important');
       host.style.setProperty('visibility', 'hidden', 'important');
       host.style.setProperty('opacity', '0', 'important');
       host.style.setProperty('pointer-events', 'none', 'important');
-      if (toast) {
-        toast.classList.remove('show');
-      }
+      host.setAttribute('hidden', '');
+      host.classList.add('fab-hidden');
+
+      // 2. Fully hide inner components inside shadow DOM
+      wrapper.style.setProperty('display', 'none', 'important');
+      wrapper.classList.add('fab-hidden');
+      button.style.setProperty('display', 'none', 'important');
+      tooltip.style.setProperty('display', 'none', 'important');
+      toast.style.setProperty('display', 'none', 'important');
+      toast.classList.remove('show');
       if (toastTimer) {
         clearTimeout(toastTimer);
         toastTimer = null;
       }
+
+      // 3. REMOVE FROM DOM COMPLETELY when disabled!
+      if (host.parentElement) {
+        try {
+          host.remove();
+        } catch {
+          // Ignore
+        }
+      }
     } else {
+      // When enabled:
+      host.removeAttribute('hidden');
+      host.classList.remove('fab-hidden');
       host.style.setProperty('display', 'block', 'important');
       host.style.setProperty('visibility', 'visible', 'important');
       host.style.setProperty('opacity', '1', 'important');
       host.style.setProperty('pointer-events', 'none', 'important');
+
+      wrapper.style.removeProperty('display');
+      wrapper.classList.remove('fab-hidden');
+      button.style.removeProperty('display');
+      tooltip.style.removeProperty('display');
+      toast.style.removeProperty('display');
+
+      // Re-attach to DOM if not currently attached
+      const targetParent = document.body || document.documentElement;
+      if (targetParent && !host.parentElement) {
+        targetParent.appendChild(host);
+      }
+
+      refreshWidgetState();
     }
   }
 
   // Check whether user has enabled or disabled the floating button on initial load
   getFloatingButtonEnabled().then((enabled) => {
     setHostVisibility(enabled);
+  }).catch(() => {
+    setHostVisibility(false);
   });
 
   // Re-sync visibility whenever tab receives focus (user switches to this tab)
   window.addEventListener('focus', () => {
     getFloatingButtonEnabled().then((enabled) => {
       setHostVisibility(enabled);
-    });
+    }).catch(() => {});
   });
 
   // Refresh widget state from storage
   async function refreshWidgetState() {
+    if (!isFabGloballyEnabled) {
+      return;
+    }
     try {
       const state = await getComparisonState();
       const currentUrl = window.location.href;
@@ -423,6 +485,13 @@ import { PageSnapshot } from '../models/types';
     isError: boolean = false,
     showActions: boolean = true
   ) {
+    if (!isFabGloballyEnabled) {
+      return;
+    }
+    const targetParent = document.body || document.documentElement;
+    if (targetParent && !host.parentElement) {
+      targetParent.appendChild(host);
+    }
     if (toastTimer) clearTimeout(toastTimer);
 
     const statusEl = toast.querySelector('.toast-status-text') as HTMLElement;
@@ -458,6 +527,9 @@ import { PageSnapshot } from '../models/types';
 
   // Handle Quick Add
   async function handleFabClick() {
+    if (!isFabGloballyEnabled) {
+      return;
+    }
     try {
       const state = await getComparisonState();
       const currentUrl = window.location.href;
@@ -636,10 +708,10 @@ import { PageSnapshot } from '../models/types';
     chrome.storage.onChanged.addListener((changes, areaName) => {
       if (areaName === 'local') {
         if (changes[STORAGE_KEY_SHOW_FAB]) {
-          const isVisible = changes[STORAGE_KEY_SHOW_FAB].newValue !== false;
+          const isVisible = changes[STORAGE_KEY_SHOW_FAB].newValue === true;
           setHostVisibility(isVisible);
         }
-        if (changes['compare_anything_state']) {
+        if (changes['compare_anything_state'] && isFabGloballyEnabled) {
           refreshWidgetState();
         }
       }
@@ -650,20 +722,19 @@ import { PageSnapshot } from '../models/types';
   if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
     chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (message.action === 'toggleFloatingButton') {
-        const isVisible = message.enabled !== false;
+        const isVisible = message.enabled === true;
         setHostVisibility(isVisible);
-        sendResponse({ success: true });
+        sendResponse({ success: true, isVisible });
         return false;
       }
       if (message.action === 'triggerAddCurrentPage') {
-        handleFabClick();
+        if (isFabGloballyEnabled) {
+          handleFabClick();
+        }
         sendResponse({ success: true });
         return false;
       }
       return false;
     });
   }
-
-  // Initial load
-  refreshWidgetState();
 })();

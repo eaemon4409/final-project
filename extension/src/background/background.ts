@@ -30,24 +30,32 @@ chrome.runtime.onStartup.addListener(() => {
 function broadcastFloatingButtonState(enabled: boolean) {
   if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.query) {
     chrome.tabs.query({}, (tabs) => {
+      if (!tabs) return;
       for (const tab of tabs) {
-        if (
-          tab.id &&
-          tab.url &&
-          !tab.url.startsWith('chrome://') &&
-          !tab.url.startsWith('chrome-extension://') &&
-          !tab.url.startsWith('edge://')
-        ) {
+        if (typeof tab.id === 'number') {
+          // 1. Send message to content script
           chrome.tabs.sendMessage(
             tab.id,
             { action: 'toggleFloatingButton', enabled },
             () => {
-              // Access chrome.runtime.lastError to mark it handled and prevent Chrome from logging an error
               if (chrome.runtime && chrome.runtime.lastError) {
                 void chrome.runtime.lastError;
               }
             }
           );
+
+          // 2. If disabling, also forcefully remove DOM element via scripting API
+          if (!enabled && chrome.scripting && tab.id) {
+            chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              func: () => {
+                const el = document.getElementById('compare-anything-fab-root');
+                if (el) el.remove();
+              }
+            }).catch(() => {
+              // Ignore tabs where scripting is restricted
+            });
+          }
         }
       }
     });
