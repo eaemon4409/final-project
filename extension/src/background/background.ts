@@ -26,14 +26,44 @@ chrome.runtime.onStartup.addListener(() => {
   updateExtensionBadge();
 });
 
+// Broadcast floating button state to all tabs in all windows
+function broadcastFloatingButtonState(enabled: boolean) {
+  if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.query) {
+    chrome.tabs.query({}, (tabs) => {
+      for (const tab of tabs) {
+        if (
+          tab.id &&
+          tab.url &&
+          !tab.url.startsWith('chrome://') &&
+          !tab.url.startsWith('chrome-extension://') &&
+          !tab.url.startsWith('edge://')
+        ) {
+          chrome.tabs.sendMessage(tab.id, {
+            action: 'toggleFloatingButton',
+            enabled
+          }).catch(() => {
+            // Ignore restricted tabs
+          });
+        }
+      }
+    });
+  }
+}
+
 // Listen for storage changes from popup or content script
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === 'local' && changes['compare_anything_state']) {
-    updateExtensionBadge();
+  if (areaName === 'local') {
+    if (changes['compare_anything_state']) {
+      updateExtensionBadge();
+    }
+    if (changes['compare_anything_show_fab']) {
+      const isEnabled = changes['compare_anything_show_fab'].newValue !== false;
+      broadcastFloatingButtonState(isEnabled);
+    }
   }
 });
 
-// Handle messages from content script
+// Handle messages from content script or popup
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === 'openResults') {
     chrome.tabs.create({ url: chrome.runtime.getURL('results.html') });
@@ -43,6 +73,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   if (message.action === 'updateBadge') {
     updateExtensionBadge().then(() => sendResponse({ success: true }));
+    return true;
+  }
+
+  if (message.action === 'broadcastFloatingButtonState') {
+    broadcastFloatingButtonState(message.enabled !== false);
+    sendResponse({ success: true });
     return true;
   }
 

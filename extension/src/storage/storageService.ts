@@ -183,8 +183,11 @@ export async function getFloatingButtonEnabled(): Promise<boolean> {
     }
 
     chrome.storage.local.get([STORAGE_KEY_SHOW_FAB], (result) => {
-      const enabled = result[STORAGE_KEY_SHOW_FAB];
-      resolve(enabled === undefined ? true : Boolean(enabled));
+      if (chrome.runtime && chrome.runtime.lastError) {
+        return resolve(true);
+      }
+      const val = result ? result[STORAGE_KEY_SHOW_FAB] : undefined;
+      resolve(val === false ? false : true);
     });
   });
 }

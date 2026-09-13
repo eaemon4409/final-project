@@ -24,6 +24,8 @@ import { PageSnapshot } from '../models/types';
   host.style.bottom = '26px';
   host.style.right = '26px';
   host.style.pointerEvents = 'none'; // container does not block clicks elsewhere
+  // Start initially hidden so it NEVER flashes or appears if disabled
+  host.style.setProperty('display', 'none', 'important');
 
   const shadow = host.attachShadow({ mode: 'open' });
 
@@ -341,15 +343,44 @@ import { PageSnapshot } from '../models/types';
   const targetParent = document.body || document.documentElement;
   targetParent.appendChild(host);
 
-  // Check whether user has enabled or disabled the floating button
-  getFloatingButtonEnabled().then((enabled) => {
-    host.style.display = enabled ? 'block' : 'none';
-  });
-
   // State trackers
   let isCurrentPageAdded = false;
   let currentPageId: string | null = null;
   let toastTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Robust visibility setter that completely hides/shows all elements
+  function setHostVisibility(visible: boolean) {
+    if (!visible) {
+      host.style.setProperty('display', 'none', 'important');
+      host.style.setProperty('visibility', 'hidden', 'important');
+      host.style.setProperty('opacity', '0', 'important');
+      host.style.setProperty('pointer-events', 'none', 'important');
+      if (toast) {
+        toast.classList.remove('show');
+      }
+      if (toastTimer) {
+        clearTimeout(toastTimer);
+        toastTimer = null;
+      }
+    } else {
+      host.style.setProperty('display', 'block', 'important');
+      host.style.setProperty('visibility', 'visible', 'important');
+      host.style.setProperty('opacity', '1', 'important');
+      host.style.setProperty('pointer-events', 'none', 'important');
+    }
+  }
+
+  // Check whether user has enabled or disabled the floating button on initial load
+  getFloatingButtonEnabled().then((enabled) => {
+    setHostVisibility(enabled);
+  });
+
+  // Re-sync visibility whenever tab receives focus (user switches to this tab)
+  window.addEventListener('focus', () => {
+    getFloatingButtonEnabled().then((enabled) => {
+      setHostVisibility(enabled);
+    });
+  });
 
   // Refresh widget state from storage
   async function refreshWidgetState() {
@@ -605,8 +636,8 @@ import { PageSnapshot } from '../models/types';
     chrome.storage.onChanged.addListener((changes, areaName) => {
       if (areaName === 'local') {
         if (changes[STORAGE_KEY_SHOW_FAB]) {
-          const show = changes[STORAGE_KEY_SHOW_FAB].newValue !== false;
-          host.style.display = show ? 'block' : 'none';
+          const isVisible = changes[STORAGE_KEY_SHOW_FAB].newValue !== false;
+          setHostVisibility(isVisible);
         }
         if (changes['compare_anything_state']) {
           refreshWidgetState();
@@ -615,9 +646,15 @@ import { PageSnapshot } from '../models/types';
     });
   }
 
-  // Handle keyboard shortcut (Alt+C) message forwarded by background worker
+  // Handle messages from background worker or popup
   if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
     chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+      if (message.action === 'toggleFloatingButton') {
+        const isVisible = message.enabled !== false;
+        setHostVisibility(isVisible);
+        sendResponse({ success: true });
+        return true;
+      }
       if (message.action === 'triggerAddCurrentPage') {
         handleFabClick();
         sendResponse({ success: true });
