@@ -71,31 +71,53 @@ class GroqProvider implements IAIProvider
                     'type' => 'json_object',
                 ],
                 'temperature' => 0.1,
-                'max_tokens' => 8192,
+                'max_tokens' => 2048,
             ]);
         };
 
-        $response = $sendRequest($this->model);
+        $candidateModels = array_values(array_unique([
+            $this->model,
+            'openai/gpt-oss-120b',
+            'openai/gpt-oss-20b',
+        ]));
 
-        // If the configured model was not found (404), automatically fallback to openai/gpt-oss-120b or openai/gpt-oss-20b
-        if ($response->status() === 404 && $this->model !== 'openai/gpt-oss-120b') {
-            Log::warning("Groq model '{$this->model}' not found (404). Automatically retrying with openai/gpt-oss-120b...");
-            $this->model = 'openai/gpt-oss-120b';
-            $response = $sendRequest($this->model);
+        $response = null;
+        $usedModel = $this->model;
+        $lastErrorMsg = '';
+
+        foreach ($candidateModels as $candidate) {
+            $usedModel = $candidate;
+            try {
+                $response = $sendRequest($candidate);
+
+                if ($response->successful()) {
+                    $this->model = $usedModel;
+                    break;
+                }
+
+                $status = $response->status();
+                $body = $response->json();
+                $lastErrorMsg = $body['error']['message'] ?? $response->body();
+
+                Log::warning("Groq model '{$candidate}' returned HTTP {$status}: {$lastErrorMsg}. Attempting next model...");
+
+                // If 401 or 403, key itself is invalid, don't keep looping
+                if ($status === 401 || $status === 403) {
+                    throw new RuntimeException('Invalid or expired Groq API key configuration.');
+                }
+
+                // If 429 or 404, continue to next model in the chain
+            } catch (Throwable $e) {
+                if ($e instanceof RuntimeException && str_contains($e->getMessage(), 'Invalid or expired')) {
+                    throw $e;
+                }
+                $lastErrorMsg = $e->getMessage();
+                Log::warning("Groq request to '{$candidate}' threw exception: {$lastErrorMsg}");
+            }
         }
 
-        if ($response->status() === 429) {
-            throw new RuntimeException('Free AI capacity is temporarily unavailable (Groq 429 rate limit).');
-        }
-
-        if ($response->status() === 401 || $response->status() === 403) {
-            throw new RuntimeException('Invalid or expired Groq API key configuration.');
-        }
-
-        if (!$response->successful()) {
-            $errorBody = $response->json();
-            $errorMessage = $errorBody['error']['message'] ?? $response->body();
-            throw new RuntimeException("Groq API error ({$response->status()}): {$errorMessage}");
+        if (!$response || !$response->successful()) {
+            throw new RuntimeException("All Groq models failed. Last error: {$lastErrorMsg}");
         }
 
         $json = $response->json();

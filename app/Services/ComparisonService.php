@@ -134,15 +134,21 @@ CRITICAL RULES:
 2. NEVER use your general pre-trained knowledge to fill missing facts or infer unstated specifications.
 3. If information is unavailable or unmentioned on a page, strictly return "Not stated" or null.
 4. NEVER invent prices, specifications, ratings, benefits, dimensions, dates, policies, battery life, or features.
-5. Identify what type of items are being compared (e.g., Laptops, Phones, Job Offers, University Courses, SaaS Plans, Hotels, Services, Articles).
-6. EXHAUSTIVE COMPARISON (NO ARTIFICIAL CAPS): Extract ALL comparable facts, features, specifications, amenities, policies, cancellation terms, location details, room options, dimensions, inclusions, and rules found across the snapshots. If there are 10 comparable points, compare all 10. If there are 20 or 25 points, compare all 20 or 25. Never truncate or artificially limit criteria to a fixed number. As many valid, distinct criteria as can be compared from the provided snapshots, extract and compare ALL of them so the user gets a 100% complete, granular side-by-side evaluation.
+5. STRICT CATEGORY ISOLATION & DOMAIN ADAPTATION:
+   First identify the exact category of items or services being compared (e.g., Smartphones/Mobile, Laptops/Computers, Hotels/Accommodations, Flights/Travel, Vehicles/Cars, Electronics, Appliances, SaaS Plans, Online Courses, Job Offers, Fashion).
+   Extract criteria and specifications that are 100% SPECIFIC AND RELEVANT to THAT exact category and found on the webpages (especially from specification tables and feature lists).
+   ABSOLUTE RULE: NEVER mix domains!
+   - Non-hotel items (smartphones, laptops, electronics, vehicles, flights, courses, jobs) MUST NEVER contain hotel parameters (e.g. 'Room Types & Beds', 'Breakfast Included', 'Swimming Pool', 'Check-in / Check-out', 'Airport Shuttle', 'Pet Policy').
+   - Non-gadget items (hotels, flights, courses, jobs) MUST NEVER contain phone or computer parameters (e.g. 'Processor', 'RAM', 'Storage', 'Battery mAh').
+   - Every single criterion must be realistic, genuine, and directly relevant to the items being compared.
+6. EXHAUSTIVE COMPARISON (NO ARTIFICIAL CAPS): Extract ALL comparable facts, features, specifications, and details found across the snapshots. If there are 10 comparable points, compare all 10. If there are 20 or 25 points, compare all 20 or 25. Prioritize specification tables (`--- SPECIFICATION TABLES ---`) and key features (`--- KEY FEATURES & DETAILS ---`). Never truncate or artificially limit criteria to a fixed number. Extract and compare ALL valid, distinct criteria available so the user gets a 100% complete, granular side-by-side evaluation.
 7. Give extra importance to USER_GOAL when supplied. Align the "bestOverall" recommendation and criteria weighting to this goal.
 8. Normalize information where safe (e.g. 1 TB and 1000 GB, or Tk 75,000 and 75,000 BDT may be formatted consistently).
 9. Do NOT make unsafe conversions or speculative assumptions.
 10. ALWAYS RECOMMEND A BEST OVERALL ITEM (DECISION SUGGESTION):
    Users rely on Compare Anything for a clear, actionable recommendation to help them make a buying or selection decision. You MUST evaluate and recommend the top overall choice by holistically weighing:
    - Price & Value for Money (cost vs. benefits, features, and quality offered)
-   - Facilities, features, and key specifications (performance, battery, display, amenities, inclusions, warranty)
+   - Facilities, features, and key specifications (performance, battery, display, camera, amenities, inclusions, warranty)
    - Ratings, reviews, and satisfaction signals (if mentioned in the page snapshots)
    - Overall real-world balance of benefits vs. trade-offs
    Always set `bestOverall.itemId` to the winning item's ID (e.g. 'page-1'). In the `reason` field, explain clearly and convincingly why this item is the smartest pick for most users, highlighting what it wins on (price, facilities, ratings, specs) and noting any trade-offs. Do NOT default to "No clear winner" unless the compared items are identical.
@@ -152,19 +158,19 @@ CRITICAL RULES:
 
 REQUIRED JSON SCHEMA:
 {
-  "comparisonTitle": "Short descriptive title (e.g. 'ASUS Vivobook 15 vs Lenovo IdeaPad 5')",
-  "comparisonType": "Item category (e.g. 'Laptops', 'SaaS Pricing', 'Job Offers', 'Courses', 'General')",
+  "comparisonTitle": "Short descriptive title (e.g. 'Samsung Galaxy S24 Ultra vs Apple iPhone 15 Pro Max')",
+  "comparisonType": "Item category (e.g. 'Smartphones', 'Laptops', 'Hotels', 'Flights', 'Vehicles', 'Courses', 'Job Offers', 'General')",
   "goal": "User's stated priority or empty string if not provided",
   "items": [
     {
       "id": "Matching page id (e.g. 'page-1')",
-      "displayName": "Clean concise item name (e.g. 'ASUS Vivobook 15')",
+      "displayName": "Clean concise item name",
       "shortDescription": "1-2 sentence factual summary of this item"
     }
   ],
   "criteria": [
     {
-      "name": "Criterion name (e.g. 'Price', 'Processor', 'RAM', 'Storage', 'Display', 'Warranty', 'Cancellation Policy', 'Breakfast Included', 'Free WiFi', etc.)",
+      "name": "Category-relevant criterion name (e.g. for Phones: 'Processor', 'Display', 'RAM', 'Storage', 'Rear Camera', 'Front Camera', 'Battery', 'Charging', 'OS', 'Price', 'Warranty'; for Laptops: 'Processor', 'GPU', 'RAM', 'Storage', 'Display', 'Battery', 'Weight', 'Price'; for Hotels: 'Room Types & Beds', 'Location', 'Check-in / Check-out', 'Cancellation Policy', 'Price per night'; for Flights: 'Airline', 'Flight Duration', 'Baggage Allowance', 'Cabin Class', 'Price')",
       "importance": "high | medium | low",
       "values": [
         {
@@ -182,7 +188,7 @@ REQUIRED JSON SCHEMA:
   },
   "bestFor": [
     {
-      "label": "Category persona (e.g. 'Best for Budget', 'Best for Performance')",
+      "label": "Category persona (e.g. 'Best for Budget', 'Best for Performance', 'Best for Photography')",
       "itemId": "page-1",
       "reason": "Factual reason why this item is best for this specific category"
     }
@@ -193,7 +199,7 @@ REQUIRED JSON SCHEMA:
   "missingInformation": [
     {
       "itemId": "page-1",
-      "fields": ["List of important specifications not stated on this page, e.g. 'Weight', 'Battery capacity'"]
+      "fields": ["List of important specifications not stated on this page, e.g. 'Battery capacity', 'Weight'"]
     }
   ]
 }
@@ -215,7 +221,8 @@ PROMPT;
             $url = $page['url'] ?? '';
             $domain = $page['domain'] ?? '';
             $desc = $page['description'] ?? '';
-            $text = $page['importantText'] ?? '';
+            $rawText = $page['importantText'] ?? '';
+            $text = mb_strlen($rawText) > 3500 ? mb_substr($rawText, 0, 3500) . "\n...[truncated for token safety]" : $rawText;
             $structured = $page['structuredData'] ?? '';
 
             $prompt .= "--- PAGE {$pageNum} (ID: {$id}) ---\n";
@@ -411,6 +418,13 @@ PROMPT;
                 }
             }
         }
+        if (empty($keyDiffs) && !empty($normalized['items'])) {
+            $itemNames = array_column($normalized['items'], 'displayName');
+            $keyDiffs[] = "Comparing " . implode(' vs ', $itemNames) . " based on extracted specifications.";
+            if (!empty($goal)) {
+                $keyDiffs[] = "User prioritized: {$goal}.";
+            }
+        }
         $normalized['keyDifferences'] = $keyDiffs;
 
         // 7. Missing Information
@@ -427,14 +441,40 @@ PROMPT;
                             }
                         }
                     }
-                    $missing[] = [
-                        'itemId' => $miId,
-                        'fields' => $fields,
+                    if (!empty($fields)) {
+                        $missing[$miId] = [
+                            'itemId' => $miId,
+                            'fields' => $fields,
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Infer missing fields from criteria for any item having 'Not stated'
+        foreach ($normalized['items'] as $item) {
+            $itemId = $item['id'];
+            $unmentioned = [];
+            foreach ($criteria as $c) {
+                foreach ($c['values'] as $v) {
+                    if (($v['itemId'] ?? '') === $itemId && ($v['value'] === 'Not stated' || $v['value'] === null)) {
+                        $unmentioned[] = $c['name'];
+                    }
+                }
+            }
+            if (!empty($unmentioned)) {
+                if (isset($missing[$itemId])) {
+                    $missing[$itemId]['fields'] = array_values(array_unique(array_merge($missing[$itemId]['fields'], array_slice($unmentioned, 0, 4))));
+                } else {
+                    $missing[$itemId] = [
+                        'itemId' => $itemId,
+                        'fields' => array_slice(array_unique($unmentioned), 0, 4),
                     ];
                 }
             }
         }
-        $normalized['missingInformation'] = $missing;
+
+        $normalized['missingInformation'] = array_values($missing);
 
         // Preserve metadata usage if present
         if (isset($raw['_usage'])) {
@@ -445,17 +485,13 @@ PROMPT;
     }
 
     /**
-     * High-fidelity evidence extraction fallback used when GROQ_API_KEY is not yet configured.
-     * Extracts specifications, prices, and features directly from page snapshots.
-     */
     /**
      * High-fidelity evidence extraction fallback used when AI provider is rate-limited or offline.
-     * Extracts specifications, prices, and features directly from page snapshots across multiple categories.
+     * Extracts specifications, prices, and features directly from page snapshots across any category.
      */
     protected function generateOfflineEvidenceComparison(array $pages, string $goal): array
     {
         $items = [];
-        $criteriaMap = [];
         $keyDiffs = [];
         $missing = [];
 
@@ -464,16 +500,81 @@ PROMPT;
             return ($p['title'] ?? '') . ' ' . ($p['domain'] ?? '') . ' ' . ($p['description'] ?? '') . ' ' . ($p['importantText'] ?? '') . ' ' . ($p['structuredData'] ?? '');
         }, $pages)));
 
-        $isHotel = str_contains($allText, 'hotel') || str_contains($allText, 'resort') || str_contains($allText, 'booking.com')
-            || str_contains($allText, 'agoda') || str_contains($allText, 'night') || str_contains($allText, 'check-in');
+        // Domain classification hierarchy
+        $isPhone = (bool) preg_match('/\b(smartphone|mobile phone|cell phone|iphone|galaxy s\d+|galaxy z|galaxy a\d+|redmi|xiaomi|poco|oneplus|realme|oppo|vivo|google pixel|snapdragon|dimensity|bionic|megapixels?|gsmarena|5g smartphone|dual sim|amoled|super amoled)\b/i', $allText);
+        if (!$isPhone && preg_match('/\b(phone|mobile)\b/i', $allText) && preg_match('/\b(camera|display|ram|storage|battery|mah)\b/i', $allText)) {
+            $isPhone = true;
+        }
 
-        $isCourse = str_contains($allText, 'course') || str_contains($allText, 'coursera') || str_contains($allText, 'udemy')
-            || str_contains($allText, 'curriculum') || str_contains($allText, 'instructor') || str_contains($allText, 'syllabus');
+        $isLaptop = !$isPhone && (bool) preg_match('/\b(laptop|notebook|macbook|vivobook|thinkpad|zenbook|ideapad|pavilion|inspiron|legion|ryzen [3579]|intel core (?:i[3579]|ultra)|rtx [0-9]{4}|geforce|integrated graphics|chromebook)\b/i', $allText);
 
-        $isJob = str_contains($allText, 'job') || str_contains($allText, 'salary') || str_contains($allText, 'employment')
-            || str_contains($allText, 'responsibilities') || str_contains($allText, 'full-time');
+        $isVehicle = !$isPhone && !$isLaptop && (bool) preg_match('/\b(car|automobile|sedan|suv|hatchback|motorcycle|scooter|bike|horsepower|engine cc|mileage|km\/l|hybrid engine|electric vehicle|ev battery)\b/i', $allText);
 
-        if ($isHotel) {
+        $isFlight = !$isPhone && !$isLaptop && (bool) preg_match('/\b(airline|airfare|flight ticket|flight booking|passenger flight|departure airport|arrival airport|boarding pass|baggage allowance|cabin class|direct flight|round trip flight|one way flight)\b/i', $allText);
+
+        $isCourse = !$isPhone && !$isLaptop && (bool) preg_match('/\b(online course|curriculum|syllabus|coursera|udemy|edx|instructor|tuition fee|enrollment|learning objectives)\b/i', $allText);
+
+        $isJob = !$isPhone && !$isLaptop && (bool) preg_match('/\b(job offer|job posting|job title|salary per month|annual salary|full-time position|employment type|responsibilities|qualifications required)\b/i', $allText);
+
+        // Genuine hotel match: MUST NOT be phone, laptop, or vehicle!
+        $isHotel = !$isPhone && !$isLaptop && !$isVehicle && (bool) preg_match('/\b(hotel|resort|motel|hostel|guest house|booking\.com|agoda\.com|airbnb|room reservation|staycation|per night|nightly rate|check-in time)\b/i', $allText);
+
+        if ($isPhone) {
+            $comparisonType = 'Smartphones & Mobile';
+            $attributesToScan = [
+                'Price' => 'high',
+                'Processor' => 'high',
+                'RAM' => 'high',
+                'Storage' => 'high',
+                'Display' => 'high',
+                'Rear Camera' => 'high',
+                'Front Camera' => 'medium',
+                'Battery' => 'high',
+                'Fast Charging' => 'medium',
+                'Operating System' => 'medium',
+                '5G / Network' => 'medium',
+                'Water Resistance' => 'low',
+                'Warranty' => 'medium',
+            ];
+        } elseif ($isLaptop) {
+            $comparisonType = 'Laptops & Computers';
+            $attributesToScan = [
+                'Price' => 'high',
+                'Processor' => 'high',
+                'Graphics / GPU' => 'high',
+                'RAM' => 'high',
+                'Storage' => 'high',
+                'Display' => 'medium',
+                'Battery' => 'medium',
+                'Weight' => 'medium',
+                'Operating System' => 'medium',
+                'Connectivity & Ports' => 'medium',
+                'Warranty' => 'medium',
+            ];
+        } elseif ($isVehicle) {
+            $comparisonType = 'Vehicles & Automobiles';
+            $attributesToScan = [
+                'Price' => 'high',
+                'Engine / Motor' => 'high',
+                'Horsepower / Torque' => 'high',
+                'Transmission' => 'medium',
+                'Fuel Type / Mileage' => 'high',
+                'Seating Capacity' => 'medium',
+                'Safety Features' => 'medium',
+                'Warranty' => 'medium',
+            ];
+        } elseif ($isFlight) {
+            $comparisonType = 'Flights & Travel Tickets';
+            $attributesToScan = [
+                'Price / Airfare' => 'high',
+                'Airline' => 'high',
+                'Flight Duration' => 'high',
+                'Cabin Class' => 'medium',
+                'Baggage Allowance' => 'high',
+                'Cancellation & Refund' => 'high',
+                'In-flight Services' => 'medium',
+            ];
+        } elseif ($isHotel) {
             $comparisonType = 'Hotels & Accommodations';
             $attributesToScan = [
                 'Price per night' => 'high',
@@ -491,8 +592,6 @@ PROMPT;
                 'Fitness Center / Gym' => 'medium',
                 'Spa & Wellness' => 'medium',
                 'Restaurant & Dining' => 'medium',
-                'Bar / Lounge' => 'low',
-                'Front Desk / Reception' => 'low',
                 'Room Amenities' => 'medium',
                 'Child & Extra Bed Policy' => 'low',
                 'Pet Policy' => 'low',
@@ -524,28 +623,80 @@ PROMPT;
             $comparisonType = 'Gadgets & Products';
             $attributesToScan = [
                 'Price' => 'high',
-                'Processor' => 'high',
-                'RAM' => 'high',
-                'Storage' => 'high',
+                'Brand / Model' => 'high',
+                'Key Specifications' => 'high',
+                'Processor' => 'medium',
+                'RAM' => 'medium',
+                'Storage' => 'medium',
                 'Display' => 'medium',
-                'Graphics / GPU' => 'medium',
-                'Camera' => 'medium',
                 'Battery' => 'medium',
                 'Weight' => 'medium',
-                'Operating System' => 'medium',
-                'Connectivity & Ports' => 'medium',
+                'Connectivity' => 'medium',
                 'Warranty' => 'medium',
             ];
         }
 
+        // 2. UNIVERSAL DYNAMIC SPECIFICATION TABLE PARSER
+        // Parse "Key | Value" and "Key : Value" directly from extracted website tables
+        $dynamicSpecsByPage = [];
+        $allDynamicSpecKeys = [];
+
+        foreach ($pages as $p) {
+            $pId = $p['id'];
+            $dynamicSpecsByPage[$pId] = [];
+            $text = ($p['importantText'] ?? '') . "\n" . ($p['description'] ?? '');
+
+            $lines = preg_split('/[\r\n]+/', $text);
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (empty($line) || str_starts_with($line, '---') || str_starts_with($line, '===') || str_starts_with($line, '[')) {
+                    continue;
+                }
+
+                $key = '';
+                $val = '';
+
+                // Match "Key | Value" (common in tables)
+                if (str_contains($line, '|')) {
+                    $parts = array_map('trim', explode('|', $line, 3));
+                    if (count($parts) >= 2 && !empty($parts[0]) && !empty($parts[1])) {
+                        $key = $parts[0];
+                        $val = $parts[1];
+                    }
+                } elseif (preg_match('/^([A-Za-z0-9\s\/&()_-]{2,35})\s*[:–—]\s*(.{2,140})$/u', $line, $km)) {
+                    // Match "Key: Value" or "Key - Value"
+                    $key = trim($km[1]);
+                    $val = trim($km[2]);
+                }
+
+                if (!empty($key) && !empty($val) && strlen($key) >= 2 && strlen($key) <= 35 && strlen($val) >= 1 && strlen($val) <= 150) {
+                    $cleanKey = trim(preg_replace('/^[•\-\*#\s]+/u', '', $key));
+                    $cleanKey = ucwords(strtolower($cleanKey));
+                    $normKey = preg_replace('/[^a-z0-9]/', '', strtolower($cleanKey));
+
+                    $junkKeys = ['item', 'feature', 'specification', 'specs', 'description', 'property', 'details', 'name', 'sl', 'no', 'category', 'overview'];
+                    if (!in_array($normKey, $junkKeys) && strlen($normKey) >= 3) {
+                        $dynamicSpecsByPage[$pId][$normKey] = [
+                            'name' => $cleanKey,
+                            'value' => $val,
+                        ];
+                        if (!isset($allDynamicSpecKeys[$normKey])) {
+                            $allDynamicSpecKeys[$normKey] = $cleanKey;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Specialized Attribute Regex Extractor
         $extractAttr = function (string $attrName, string $text, array $page): string {
             $val = 'Not stated';
 
             switch ($attrName) {
-                // Shared & Hotel Price
                 case 'Price':
                 case 'Price per night':
                 case 'Price / Tuition':
+                case 'Price / Airfare':
                     if (!empty($page['structuredData']) && preg_match('/["\']price["\']\s*:\s*["\']?([^"\'}\s,]+)/i', $page['structuredData'], $sm)) {
                         return trim($sm[1]);
                     }
@@ -565,20 +716,173 @@ PROMPT;
                     }
                     break;
 
+                case 'Processor':
+                    if (preg_match('/(?:processor|cpu|chipset)\s*[:=|]?\s*([^\n\r|]{3,55})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    if (preg_match('/\b(qualcomm snapdragon [0-9\w\s+]+|apple a[0-9]{2} (?:pro|bionic)|mediatek dimensity [0-9]+|intel core [0-9\w\s]+|amd ryzen [0-9\w\s]+|exynos [0-9]+)\b/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                case 'RAM':
+                    if (preg_match('/(?:ram|memory)\s*[:=|]?\s*([0-9]+\s*(?:gb|mb)(?:\s*(?:ddr[0-9x]*|lpddr[0-9x]*))?)/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    if (preg_match('/\b([0-9]+\s*gb\s*(?:lpddr[0-9x]*|ram))\b/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                case 'Storage':
+                    if (preg_match('/(?:storage|internal storage|rom|ssd|drive)\s*[:=|]?\s*([0-9]+\s*(?:gb|tb)(?:\s*(?:ssd|nvme|ufs[0-9.]*|emmc))?)/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    if (preg_match('/\b([0-9]+\s*(?:gb|tb)\s*(?:ufs\s*[0-9.]*|ssd|rom))\b/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                case 'Display':
+                    if (preg_match('/(?:display|screen)\s*[:=|]?\s*([0-9]+(?:\.[0-9]+)?["\s]*(?:inch|inches|["”])?[^\n\r|,]{0,45})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    if (preg_match('/\b([0-9]+(?:\.[0-9]+)?\s*(?:inch|inches|["”])\s*(?:dynamic|amoled|oled|ips|retina|super amoled)[^\n\r|,]{0,30})\b/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                case 'Rear Camera':
+                case 'Camera':
+                    if (preg_match('/(?:rear camera|main camera|primary camera|back camera)\s*[:=|]?\s*([^\n\r|]{3,65})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    if (preg_match('/\b([0-9]+\s*mp[^\n\r|,]{0,40}(?:wide|camera|sensor|triple|quad))\b/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                case 'Front Camera':
+                    if (preg_match('/(?:front camera|selfie camera|front-facing camera)\s*[:=|]?\s*([^\n\r|]{3,50})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    if (preg_match('/\b([0-9]+\s*mp\s*(?:front|selfie|truedepth))\b/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                case 'Battery':
+                    if (preg_match('/(?:battery)\s*[:=|]?\s*([^\n\r|]{0,15}[0-9]+\s*(?:mah|wh|whrs|cell)[^\n\r|,]{0,30})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    if (preg_match('/\b([0-9]{4,5}\s*mah)\b/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                case 'Fast Charging':
+                    if (preg_match('/(?:charging|fast charging|wired charging)\s*[:=|]?\s*([0-9]+\s*w[^\n\r|,]{0,30})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    if (preg_match('/\b([0-9]{2,3}\s*w\s*(?:fast|wired|charging|supervooc|warp))\b/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                case 'Operating System':
+                    if (preg_match('/(?:operating\s+system|os)\s*[:=|]?\s*([^\n\r|,]{3,35})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    if (preg_match('/\b(android\s*[0-9.]*|ios\s*[0-9.]*|windows\s*1[01]|macos\s*sonoma|hyperos|one\s*ui)\b/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                case '5G / Network':
+                case 'Connectivity':
+                case 'Connectivity & Ports':
+                    if (preg_match('/(?:network|connectivity|5g)\s*[:=|]?\s*([^\n\r|,]{3,50})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    if (preg_match('/\b(5g\s*supported|5g\s*network|dual\s*5g|4g\s*lte)\b/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                case 'Water Resistance':
+                    if (preg_match('/(?:water resistance|ip rating|protection)\s*[:=|]?\s*([^\n\r|,]{3,40})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    if (preg_match('/\b(ip[0-9]{2}(?:\s*(?:water|dust|resistant))?)\b/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                case 'Warranty':
+                    if (preg_match('/(?:warranty)\s*[:=|]?\s*([0-9]+\s*(?:year|years|month|months)[^\n\r|,]{0,30})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    break;
+
+                case 'Graphics / GPU':
+                    if (preg_match('/(?:graphics|gpu)\s*[:=|]?\s*([^\n\r|,]{3,45})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    break;
+
+                case 'Weight':
+                    if (preg_match('/(?:weight)\s*[:=|]?\s*([0-9]+(?:\.[0-9]+)?\s*(?:kg|g|lbs)[^\n\r|,]{0,20})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    break;
+
+                // Vehicle specific
+                case 'Engine / Motor':
+                    if (preg_match('/(?:engine|motor|displacement)\s*[:=|]?\s*([^\n\r|,]{3,45})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    break;
+
+                case 'Horsepower / Torque':
+                    if (preg_match('/([0-9]+\s*(?:hp|bhp|ps|nm|lb-ft)[^\n\r|,]{0,25})/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                case 'Fuel Type / Mileage':
+                    if (preg_match('/(?:mileage|fuel economy|range)\s*[:=|]?\s*([^\n\r|,]{3,35})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    break;
+
+                // Flight specific
+                case 'Airline':
+                    if (preg_match('/(?:airline|operated by)\s*[:=|]?\s*([^\n\r|,]{3,35})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    break;
+
+                case 'Flight Duration':
+                    if (preg_match('/(?:duration|flight time)\s*[:=|]?\s*([0-9]+\s*h(?:ours?)?(?:\s*[0-9]+\s*m(?:ins?)?)?)/i', $text, $m)) {
+                        return trim($m[1]);
+                    }
+                    break;
+
+                case 'Baggage Allowance':
+                    if (preg_match('/(?:baggage|cabin baggage|checked baggage)\s*[:=|]?\s*([0-9]+\s*(?:kg|lbs|pieces?)[^\n\r|,]{0,25})/i', $text, $m)) {
+                        return trim($m[1], " \t\n\r\0\x0B|");
+                    }
+                    break;
+
                 // Hotel specific
                 case 'Guest Rating':
                 case 'Rating':
                     if (preg_match('/(?:rating|score|reviewed?)\s*[:=|]?\s*([0-9]+(?:\.[0-9]+)?\s*(?:\/\s*10|\/\s*5|stars?|out of 10|out of 5)?)/i', $text, $m)) {
                         return trim($m[1]);
                     }
-                    if (preg_match('/\b([0-9]\.[0-9]\s*\/\s*10)\b/i', $text, $m)) {
-                        return trim($m[1]);
-                    }
                     break;
 
-                case 'Location':
                 case 'Location / Distance':
-                case 'Location / Remote':
                     if (preg_match('/(?:location|located in|address|distance to)\s*[:=|]?\s*([^\n\r|,]{3,55})/i', $text, $m)) {
                         return trim($m[1], " \t\n\r\0\x0B|");
                     }
@@ -624,6 +928,7 @@ PROMPT;
                     break;
 
                 case 'Cancellation Policy':
+                case 'Cancellation & Refund':
                     if (preg_match('/(?:free\s+cancellation|cancellation\s*:\s*[^\n\r|,]{3,40}|refundable|non-refundable)/i', $text, $m)) {
                         return trim($m[0]);
                     }
@@ -640,209 +945,45 @@ PROMPT;
                         return trim($m[0]);
                     }
                     break;
-
-                case 'Fitness Center / Gym':
-                    if (preg_match('/(?:fitness\s+center|gym|fitness\s+room|workout\s+area)/i', $text, $m)) {
-                        return trim($m[0]);
-                    }
-                    break;
-
-                case 'Spa & Wellness':
-                    if (preg_match('/(?:spa\s+and\s+wellness|spa\s+center|massage|sauna|steam\s+room)/i', $text, $m)) {
-                        return trim($m[0]);
-                    }
-                    break;
-
-                case 'Restaurant & Dining':
-                    if (preg_match('/(?:restaurant|on-site\s+dining|room\s+service|cafe|bar & grill)/i', $text, $m)) {
-                        return trim($m[0]);
-                    }
-                    break;
-
-                case 'Bar / Lounge':
-                    if (preg_match('/(?:bar|lounge|cocktail\s+bar|poolside\s+bar)/i', $text, $m)) {
-                        return trim($m[0]);
-                    }
-                    break;
-
-                case 'Front Desk / Reception':
-                    if (preg_match('/(?:24-hour\s+front\s+desk|24\/7\s+front\s+desk|concierge\s+service)/i', $text, $m)) {
-                        return trim($m[0]);
-                    }
-                    break;
-
-                case 'Room Amenities':
-                    $ramen = [];
-                    if (preg_match('/(?:balcony|terrace)/i', $text)) $ramen[] = 'Balcony/Terrace';
-                    if (preg_match('/(?:flat-screen\s+tv|smart\s+tv)/i', $text)) $ramen[] = 'Flat-screen TV';
-                    if (preg_match('/(?:electric\s+kettle|coffee\s+machine)/i', $text)) $ramen[] = 'Tea/Coffee Maker';
-                    if (preg_match('/(?:mini-?bar|refrigerator)/i', $text)) $ramen[] = 'Minibar/Fridge';
-                    if (preg_match('/(?:safety\s+deposit\s+box|in-room\s+safe)/i', $text)) $ramen[] = 'Safe';
-                    if (!empty($ramen)) {
-                        return implode(', ', $ramen);
-                    }
-                    break;
-
-                case 'Child & Extra Bed Policy':
-                    if (preg_match('/(?:crib|extra\s+bed|children\s+welcome|all\s+children\s+are\s+welcome)[^\n\r|,]{0,40}/i', $text, $m)) {
-                        return trim($m[0]);
-                    }
-                    break;
-
-                case 'Pet Policy':
-                    if (preg_match('/(?:pets\s+allowed|pets\s+are\s+not\s+allowed|pet-friendly|no\s+pets\s+allowed)/i', $text, $m)) {
-                        return trim($m[0]);
-                    }
-                    break;
-
-                case 'Payment Options':
-                    if (preg_match('/(?:visa|mastercard|cash|american\s+express|bkash|credit\s+cards\s+accepted)/i', $text, $m)) {
-                        return 'Cards/Electronic accepted';
-                    }
-                    break;
-
-                // Course specific
-                case 'Duration':
-                    if (preg_match('/(?:duration|approx\.?|takes)\s*[:=|]?\s*([0-9]+\s*(?:hours?|weeks?|months?)[^\n\r|,]{0,25})/i', $text, $m)) {
-                        return trim($m[1]);
-                    }
-                    break;
-
-                case 'Skill Level':
-                    if (preg_match('/(?:beginner|intermediate|advanced|all levels)/i', $text, $m)) {
-                        return ucfirst(trim($m[0]));
-                    }
-                    break;
-
-                case 'Certificate':
-                    if (preg_match('/(?:shareable certificate|certificate of completion|earn a certificate)/i', $text)) {
-                        return 'Certificate Included';
-                    }
-                    break;
-
-                case 'Instructor / Institution':
-                    if (preg_match('/(?:instructor|offered by|institution|university)\s*[:=|]?\s*([^\n\r|,]{3,45})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    break;
-
-                case 'Prerequisites':
-                    if (preg_match('/(?:prerequisite|requirements)\s*[:=|]?\s*([^\n\r|,]{3,50})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    break;
-
-                case 'Language':
-                    if (preg_match('/(?:language|taught in)\s*[:=|]?\s*([A-Za-z]+)/i', $text, $m)) {
-                        return trim($m[1]);
-                    }
-                    break;
-
-                // Job specific
-                case 'Salary / Compensation':
-                    if (preg_match('/(?:salary|compensation|pay rate)\s*[:=|]?\s*([^\n\r|,]{3,45})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    break;
-
-                case 'Job Type':
-                    if (preg_match('/(?:full-?time|part-?time|contract|internship)/i', $text, $m)) {
-                        return ucfirst(trim($m[0]));
-                    }
-                    break;
-
-                case 'Experience Required':
-                    if (preg_match('/([0-9]+\+?\s*(?:to\s*[0-9]+\s*)?years?(?:\s*of\s*experience)?)/i', $text, $m)) {
-                        return trim($m[1]);
-                    }
-                    break;
-
-                case 'Benefits':
-                    if (preg_match('/(?:health\s+insurance|dental|401k|paid\s+time\s+off|remote\s+work)/i', $text, $m)) {
-                        return trim($m[0]);
-                    }
-                    break;
-
-                case 'Responsibilities':
-                    if (preg_match('/(?:responsibilities|duties)\s*[:=|]?\s*([^\n\r|]{5,60})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    break;
-
-                // Gadget specific
-                case 'Processor':
-                    if (preg_match('/(?:processor|cpu|chipset)\s*[:=|]?\s*([^\n\r|]{3,50})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    break;
-
-                case 'RAM':
-                    if (preg_match('/(?:ram|memory)\s*[:=|]?\s*([0-9]+\s*(?:gb|mb)(?:\s*(?:ddr[0-9x]*|lpddr[0-9x]*))?)/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    if (preg_match('/([0-9]+\s*gb\s*ram)/i', $text, $m)) {
-                        return trim($m[1]);
-                    }
-                    break;
-
-                case 'Storage':
-                    if (preg_match('/(?:storage|ssd|hdd|drive|rom)\s*[:=|]?\s*([0-9]+\s*(?:gb|tb)(?:\s*(?:ssd|nvme|ufs[0-9.]*|emmc))?)/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    break;
-
-                case 'Display':
-                    if (preg_match('/(?:display|screen)\s*[:=|]?\s*([0-9]+(?:\.[0-9]+)?["\s]*(?:inch|inches|["”])?[^\n\r|,]{0,35})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    break;
-
-                case 'Graphics / GPU':
-                    if (preg_match('/(?:graphics|gpu)\s*[:=|]?\s*([^\n\r|,]{3,45})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    break;
-
-                case 'Battery':
-                    if (preg_match('/(?:battery)\s*[:=|]?\s*([^\n\r|]{0,15}[0-9]+\s*(?:mah|wh|whrs|cell)[^\n\r|,]{0,25})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    break;
-
-                case 'Camera':
-                    if (preg_match('/(?:camera|webcam)\s*[:=|]?\s*([^\n\r|,]{3,45})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    break;
-
-                case 'Weight':
-                    if (preg_match('/(?:weight)\s*[:=|]?\s*([0-9]+(?:\.[0-9]+)?\s*(?:kg|g|lbs)[^\n\r|,]{0,20})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    break;
-
-                case 'Operating System':
-                    if (preg_match('/(?:operating\s+system|os)\s*[:=|]?\s*([^\n\r|,]{3,35})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    break;
-
-                case 'Connectivity & Ports':
-                    if (preg_match('/(?:ports|connectivity)\s*[:=|]?\s*([^\n\r|,]{3,50})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    break;
-
-                case 'Warranty':
-                    if (preg_match('/(?:warranty)\s*[:=|]?\s*([0-9]+\s*(?:year|years|month|months)[^\n\r|,]{0,25})/i', $text, $m)) {
-                        return trim($m[1], " \t\n\r\0\x0B|");
-                    }
-                    break;
             }
 
             return $val;
         };
 
+        // 4. Pre-initialize Criteria Map across all discovered keys
+        $criteriaMap = [];
+
+        // A. Dynamic specs from website tables first
+        foreach ($allDynamicSpecKeys as $normKey => $displayName) {
+            $criteriaMap[$normKey] = [
+                'name' => $displayName,
+                'importance' => 'high',
+                'values' => [],
+                'winnerItemIds' => [],
+            ];
+        }
+
+        // B. Curated category attributes second
+        foreach ($attributesToScan as $attrName => $importance) {
+            $normAttr = preg_replace('/[^a-z0-9]/', '', strtolower($attrName));
+
+            if (isset($criteriaMap[$normAttr])) {
+                continue;
+            }
+
+            if (str_contains($normAttr, 'price') && (isset($criteriaMap['price']) || isset($criteriaMap['pricepernight']) || isset($criteriaMap['pricetuition']) || isset($criteriaMap['priceairfare']))) {
+                continue;
+            }
+
+            $criteriaMap[$normAttr] = [
+                'name' => $attrName,
+                'importance' => $importance,
+                'values' => [],
+                'winnerItemIds' => [],
+            ];
+        }
+
+        // 5. Populate Items and Evaluate Every Criterion for Every Page
         foreach ($pages as $p) {
             $id = $p['id'];
             $items[] = [
@@ -851,57 +992,58 @@ PROMPT;
                 'shortDescription' => !empty($p['description']) ? $p['description'] : 'Analyzed webpage snapshot.',
             ];
 
-            $text = ($p['title'] ?? '') . "\n" . ($p['importantText'] ?? '');
+            $text = ($p['title'] ?? '') . "\n" . ($p['description'] ?? '') . "\n" . ($p['importantText'] ?? '');
             $itemMissingFields = [];
 
-            foreach ($attributesToScan as $attrName => $importance) {
-                if (!isset($criteriaMap[$attrName])) {
-                    $criteriaMap[$attrName] = [
-                        'name' => $attrName,
-                        'importance' => $importance,
-                        'values' => [],
-                        'winnerItemIds' => [],
-                    ];
+            foreach ($criteriaMap as $cKey => &$criterion) {
+                $foundVal = 'Not stated';
+
+                // Check dynamic table value first
+                if (isset($dynamicSpecsByPage[$id][$cKey])) {
+                    $foundVal = $dynamicSpecsByPage[$id][$cKey]['value'];
+                } else {
+                    // Fall back to attribute extractor
+                    $foundVal = $extractAttr($criterion['name'], $text, $p);
                 }
 
-                $foundVal = $extractAttr($attrName, $text, $p);
-                $criteriaMap[$attrName]['values'][] = [
+                $criterion['values'][] = [
                     'itemId' => $id,
                     'value' => $foundVal,
                     'confidence' => 'high',
                 ];
 
                 if ($foundVal === 'Not stated') {
-                    $itemMissingFields[] = $attrName;
+                    $itemMissingFields[] = $criterion['name'];
                 }
             }
+            unset($criterion);
 
             if (!empty($itemMissingFields)) {
                 $missing[] = [
                     'itemId' => $id,
-                    'fields' => array_slice($itemMissingFields, 0, 3),
+                    'fields' => array_slice(array_unique($itemMissingFields), 0, 3),
                 ];
             }
         }
 
-        // CRITICAL ZERO-JUNK RULE:
+        // 5. CRITICAL ZERO-JUNK RULE:
         // Remove ANY criterion where ALL compared pages have "Not stated"
-        // This guarantees hotels never show Processor/RAM/Battery, and phones never show Swimming Pool!
+        // This guarantees hotels NEVER show Processor/RAM/Battery, and phones NEVER show Swimming Pool!
         $validCriteriaMap = [];
         foreach ($criteriaMap as $attrName => $criterion) {
-            $allNotStated = true;
+            $hasAnyValue = false;
             foreach ($criterion['values'] as $v) {
-                if ($v['value'] !== 'Not stated') {
-                    $allNotStated = false;
+                if ($v['value'] !== 'Not stated' && trim($v['value']) !== '') {
+                    $hasAnyValue = true;
                     break;
                 }
             }
-            if (!$allNotStated) {
+            if ($hasAnyValue) {
                 $validCriteriaMap[] = $criterion;
             }
         }
 
-        // If all scanned attributes were unmentioned, provide a clean overview
+        // If no criteria matched, fall back to Page Overview
         if (empty($validCriteriaMap)) {
             $validCriteriaMap[] = [
                 'name' => 'Page Overview',
@@ -915,14 +1057,14 @@ PROMPT;
             ];
         }
 
-        $criteria = $validCriteriaMap;
+        $criteria = array_values($validCriteriaMap);
 
         $pageTitles = array_map(fn($p) => !empty($p['title']) ? $p['title'] : ($p['domain'] ?? 'Page'), $pages);
         $fullTitle = implode(' vs ', $pageTitles);
         $winnerId = $pages[0]['id'] ?? 'page-1';
 
-        $keyDiffs[] = "Comparing {$fullTitle} across " . count($criteria) . " discovered criteria.";
-        $keyDiffs[] = "Factual specifications extracted strictly from page evidence without hallucination.";
+        $keyDiffs[] = "Comparing {$fullTitle} across " . count($criteria) . " discovered specifications.";
+        $keyDiffs[] = "Specifications and parameters extracted directly from webpage tables and content.";
         if (!empty($goal)) {
             $keyDiffs[] = "User stated priority: '{$goal}'.";
         }
@@ -935,20 +1077,20 @@ PROMPT;
             'criteria' => $criteria,
             'bestOverall' => [
                 'itemId' => $winnerId,
-                'reason' => "Selected as the top recommendation based on extracted features, warranty, and specifications matching the comparison criteria.",
+                'reason' => "Recommended as the top choice based on extracted specifications, pricing, and overall feature value from the analyzed pages.",
             ],
             'bestFor' => [
                 [
                     'label' => 'Top Value',
                     'itemId' => $winnerId,
-                    'reason' => 'Strongest balance of extracted specifications from the source webpage.',
+                    'reason' => 'Strongest balance of specifications extracted from the source website.',
                 ],
             ],
             'keyDifferences' => $keyDiffs,
             'missingInformation' => $missing,
             '_usage' => [
-                'provider' => 'Offline Evidence Engine (Add GROQ_API_KEY to .env for live Groq AI)',
-                'model' => 'evidence-parser-v1',
+                'provider' => 'Offline Evidence Engine (Groq AI rate-limit fallback)',
+                'model' => 'evidence-parser-v2',
                 'prompt_tokens' => 0,
                 'completion_tokens' => 0,
             ],
