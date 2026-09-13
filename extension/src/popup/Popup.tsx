@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, RotateCcw, ShieldCheck, Sparkles, Settings } from 'lucide-react';
+import { ArrowRight, RotateCcw, ShieldCheck, Sparkles, Settings, Eye, EyeOff, HelpCircle } from 'lucide-react';
 import { CurrentPageCard } from './components/CurrentPageCard';
 import { SelectedPageList } from './components/SelectedPageList';
 import { GoalInput } from './components/GoalInput';
 import { SettingsModal } from './components/SettingsModal';
+import { OnboardingGuide } from './components/OnboardingGuide';
 import {
   getComparisonState,
   addPageSnapshot,
   removePageSnapshot,
   setUserGoal,
   clearComparison,
-  clearCachedComparison
+  clearCachedComparison,
+  getFloatingButtonEnabled,
+  setFloatingButtonEnabled,
+  STORAGE_KEY_SHOW_FAB
 } from '../storage/storageService';
 import { extractActiveTabContent } from '../extractors/pageExtractor';
 import { normalizeUrl } from '../utils/urlHelper';
@@ -27,15 +31,23 @@ export const Popup: React.FC = () => {
   const [justAdded, setJustAdded] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showFab, setShowFab] = useState<boolean>(true);
+  const [showHelp, setShowHelp] = useState<boolean>(false);
 
   // Load active tab and state on mount
   useEffect(() => {
     loadCurrentTab();
     refreshState();
+    getFloatingButtonEnabled().then(enabled => setShowFab(enabled));
 
     const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }, area: string) => {
-      if (area === 'local' && changes['compare_anything_state']) {
-        refreshState();
+      if (area === 'local') {
+        if (changes['compare_anything_state']) {
+          refreshState();
+        }
+        if (changes[STORAGE_KEY_SHOW_FAB]) {
+          setShowFab(changes[STORAGE_KEY_SHOW_FAB].newValue !== false);
+        }
       }
     };
 
@@ -143,6 +155,12 @@ export const Popup: React.FC = () => {
     }
   };
 
+  const handleToggleFab = async () => {
+    const next = !showFab;
+    setShowFab(next);
+    await setFloatingButtonEnabled(next);
+  };
+
   return (
     <div className="popup-container">
       {/* Brand Header */}
@@ -154,19 +172,47 @@ export const Popup: React.FC = () => {
             <p className="brand-tagline">Stop switching between tabs. Compare them.</p>
           </div>
         </div>
-        <button
-          type="button"
-          className="btn-header-settings"
-          onClick={() => setIsSettingsOpen(true)}
-          title="Monetization & API Settings"
-          aria-label="Settings"
-        >
-          <Settings size={16} />
-        </button>
+
+        <div className="header-actions">
+          <button
+            type="button"
+            className={`btn-header-action ${showFab ? 'active' : 'inactive'}`}
+            onClick={handleToggleFab}
+            title={showFab ? "Floating Button is ON on webpages (Click to hide)" : "Floating Button is OFF on webpages (Click to show)"}
+            aria-label="Toggle Floating Button"
+          >
+            {showFab ? <Eye size={15} /> : <EyeOff size={15} />}
+          </button>
+
+          <button
+            type="button"
+            className={`btn-header-action ${showHelp ? 'active' : ''}`}
+            onClick={() => setShowHelp(prev => !prev)}
+            title="How it works (3 easy steps)"
+            aria-label="Help"
+          >
+            <HelpCircle size={15} />
+          </button>
+
+          <button
+            type="button"
+            className="btn-header-settings"
+            onClick={() => setIsSettingsOpen(true)}
+            title="Monetization & API Settings"
+            aria-label="Settings"
+          >
+            <Settings size={15} />
+          </button>
+        </div>
       </header>
 
       {/* Main Content Area */}
       <main className="popup-content">
+        {/* First-Time User 3-Step Guide (Shown when 0 pages or when Help clicked) */}
+        {(showHelp || state.pages.length === 0) && (
+          <OnboardingGuide onDismiss={() => setShowHelp(false)} />
+        )}
+
         {/* Step 2/3: Current Page detection & Add */}
         <CurrentPageCard
           currentUrl={currentTab.url}

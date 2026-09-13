@@ -1,5 +1,12 @@
 import { extractPageFromDOM } from '../extractors/pageExtractor';
-import { getComparisonState, addPageSnapshot, removePageSnapshot, clearComparison } from '../storage/storageService';
+import {
+  getComparisonState,
+  addPageSnapshot,
+  removePageSnapshot,
+  clearComparison,
+  getFloatingButtonEnabled,
+  STORAGE_KEY_SHOW_FAB
+} from '../storage/storageService';
 import { normalizeUrl } from '../utils/urlHelper';
 import { PageSnapshot } from '../models/types';
 
@@ -334,6 +341,11 @@ import { PageSnapshot } from '../models/types';
   const targetParent = document.body || document.documentElement;
   targetParent.appendChild(host);
 
+  // Check whether user has enabled or disabled the floating button
+  getFloatingButtonEnabled().then((enabled) => {
+    host.style.display = enabled ? 'block' : 'none';
+  });
+
   // State trackers
   let isCurrentPageAdded = false;
   let currentPageId: string | null = null;
@@ -591,9 +603,27 @@ import { PageSnapshot } from '../models/types';
   // Storage listener for synchronization with popup or other tabs
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
     chrome.storage.onChanged.addListener((changes, areaName) => {
-      if (areaName === 'local' && changes['compare_anything_state']) {
-        refreshWidgetState();
+      if (areaName === 'local') {
+        if (changes[STORAGE_KEY_SHOW_FAB]) {
+          const show = changes[STORAGE_KEY_SHOW_FAB].newValue !== false;
+          host.style.display = show ? 'block' : 'none';
+        }
+        if (changes['compare_anything_state']) {
+          refreshWidgetState();
+        }
       }
+    });
+  }
+
+  // Handle keyboard shortcut (Alt+C) message forwarded by background worker
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+      if (message.action === 'triggerAddCurrentPage') {
+        handleFabClick();
+        sendResponse({ success: true });
+        return true;
+      }
+      return false;
     });
   }
 

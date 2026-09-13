@@ -168,3 +168,40 @@ export async function saveCachedComparison(comparison: ComparisonResult): Promis
     });
   });
 }
+
+export const STORAGE_KEY_SHOW_FAB = 'compare_anything_show_fab';
+
+export async function getFloatingButtonEnabled(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY_SHOW_FAB);
+        return resolve(stored === null ? true : stored === 'true');
+      } catch {
+        return resolve(true);
+      }
+    }
+
+    chrome.storage.local.get([STORAGE_KEY_SHOW_FAB], (result) => {
+      const enabled = result[STORAGE_KEY_SHOW_FAB];
+      resolve(enabled === undefined ? true : Boolean(enabled));
+    });
+  });
+}
+
+export async function setFloatingButtonEnabled(enabled: boolean): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) {
+      try {
+        localStorage.setItem(STORAGE_KEY_SHOW_FAB, String(enabled));
+      } catch {
+        // Ignore
+      }
+      return resolve();
+    }
+
+    chrome.storage.local.set({ [STORAGE_KEY_SHOW_FAB]: enabled }, () => {
+      resolve();
+    });
+  });
+}

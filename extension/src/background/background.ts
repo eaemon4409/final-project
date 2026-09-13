@@ -48,3 +48,28 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   return false;
 });
+
+// Handle keyboard shortcuts (Alt+C and Alt+Shift+C)
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command === 'open-comparison-results') {
+    chrome.tabs.create({ url: chrome.runtime.getURL('results.html') });
+  } else if (command === 'add-current-page') {
+    try {
+      const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (
+        activeTab &&
+        activeTab.id &&
+        activeTab.url &&
+        !activeTab.url.startsWith('chrome://') &&
+        !activeTab.url.startsWith('chrome-extension://') &&
+        !activeTab.url.startsWith('edge://')
+      ) {
+        chrome.tabs.sendMessage(activeTab.id, { action: 'triggerAddCurrentPage' }).catch((err) => {
+          console.warn('Could not send shortcut message to tab:', err);
+        });
+      }
+    } catch (err) {
+      console.error('Failed to handle add-current-page shortcut:', err);
+    }
+  }
+});

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Check, DollarSign, Cloud, ShieldCheck } from 'lucide-react';
 import { getActiveAffiliateConfig, saveAffiliateConfig, initAffiliateConfig, AffiliateConfig } from '../../utils/affiliateHelper';
 import { getApiBaseUrl } from '../../services/apiService';
+import { getFloatingButtonEnabled, setFloatingButtonEnabled } from '../../storage/storageService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     genericRefTag: '',
   });
   const [apiUrl, setApiUrl] = useState<string>('');
+  const [showFab, setShowFab] = useState<boolean>(true);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -50,6 +52,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       });
 
       getApiBaseUrl().then((url) => setApiUrl(url));
+      getFloatingButtonEnabled().then((enabled) => setShowFab(enabled));
       setSaved(false);
     }
   }, [isOpen]);
@@ -58,6 +61,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
   const handleSave = async () => {
     await saveAffiliateConfig(affiliate);
+    await setFloatingButtonEnabled(showFab);
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
       await chrome.storage.local.set({ customApiUrl: apiUrl.trim() });
     }
@@ -82,6 +86,37 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         </div>
 
         <div className="modal-body">
+          {/* Section 0: Preferences */}
+          <div className="settings-section-title">Preferences</div>
+
+          <div className="settings-field">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <label style={{ margin: 0, fontWeight: 600 }}>Floating Button on Pages</label>
+              <button
+                type="button"
+                onClick={() => setShowFab(!showFab)}
+                style={{
+                  background: showFab ? '#1a73e8' : '#e8eaed',
+                  color: showFab ? '#ffffff' : '#5f6368',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '4px 10px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'background 0.18s ease'
+                }}
+              >
+                {showFab ? 'ON (Shown)' : 'OFF (Hidden)'}
+              </button>
+            </div>
+            <span className="field-hint">
+              Quick toggle for the red circular quick-add button at the bottom corner of websites.
+            </span>
+          </div>
+
+          <div className="settings-divider" />
+
           <p className="settings-desc">
             Configure your affiliate tags to earn commissions whenever users click product links on comparison pages.
           </p>

@@ -77,6 +77,7 @@ export const CurrentPageCard: React.FC<CurrentPageCardProps> = ({
               <>
                 <Plus size={16} />
                 <span>+ ADD TO COMPARISON</span>
+                <kbd className="btn-kbd-badge" title="Shortcut: Alt+C">Alt+C</kbd>
               </>
             )}
           </button>

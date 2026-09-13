@@ -11,6 +11,7 @@ import {
   Layers,
   ArrowLeft,
   CheckCircle2,
+  Printer,
 } from 'lucide-react';
 import { ComparisonResult, ComparisonState } from '../models/types';
 import {
@@ -267,6 +268,16 @@ const ResultsApp: React.FC = () => {
             >
               <Download size={14} />
               <span>Export CSV</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn-action"
+              onClick={() => window.print()}
+              title="Print or Save comparison as PDF"
+            >
+              <Printer size={14} />
+              <span>Print / PDF</span>
             </button>
 
             <button

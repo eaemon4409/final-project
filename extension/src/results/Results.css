@@ -984,3 +984,76 @@ body {
   color: var(--chrome-blue-hover);
   text-decoration: underline;
 }
+
+/* Print & PDF Optimization */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    font-size: 11pt;
+  }
+
+  .results-app-bar,
+  .app-bar-actions,
+  .btn-action,
+  .toast-notice,
+  .affiliate-disclosure-tag,
+  .affiliate-subtle-hint {
+    display: none !important;
+  }
+
+  .results-container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .comparison-hero-header {
+    border-bottom: 2px solid #000000;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+  }
+
+  .hero-title {
+    font-size: 18pt !important;
+    color: #000000 !important;
+  }
+
+  .verdict-card,
+  .table-section,
+  .best-for-section,
+  .key-differences-section,
+  .missing-info-section,
+  .sources-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 24px;
+    box-shadow: none !important;
+    border: 1px solid #d1d5db !important;
+  }
+
+  .comparison-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  .comparison-table th,
+  .comparison-table td {
+    border: 1px solid #d1d5db !important;
+    padding: 6px 8px !important;
+    font-size: 10pt !important;
+  }
+
+  .best-for-grid,
+  .missing-info-grid,
+  .sources-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  a {
+    text-decoration: none !important;
+    color: #111827 !important;
+  }
+}
