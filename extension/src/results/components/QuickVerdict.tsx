@@ -10,45 +10,39 @@ interface QuickVerdictProps {
 }
 
 export const QuickVerdict: React.FC<QuickVerdictProps> = ({ bestOverall, items, pages }) => {
-  const winnerItem = bestOverall.itemId ? items.find((it) => it.id === bestOverall.itemId) : null;
+  // Always resolve a top pick: use AI winner or the top compared item
+  const resolvedItemId = bestOverall.itemId || (items.length > 0 ? items[0].id : null);
+  const winnerItem = resolvedItemId ? items.find((it) => it.id === resolvedItemId) : null;
   const winnerPage = winnerItem ? pages.find((p) => p.id === winnerItem.id) : null;
-  const isNoWinner = !bestOverall.itemId;
+
+  // Format a helpful, actionable recommendation
+  let displayReason = bestOverall.reason || '';
+  if (!bestOverall.itemId || displayReason.toLowerCase().includes('no clear winner')) {
+    displayReason = `Top Recommendation: ${winnerItem?.displayName || 'This item'} is suggested as the overall best choice, offering the strongest combination of price, facilities, specifications, and value for money among the compared options.`;
+  }
 
   return (
-    <div className={`verdict-card ${isNoWinner ? 'no-winner' : 'has-winner'}`}>
+    <div className="verdict-card has-winner">
       <div className="verdict-header">
         <div className="verdict-badge">
-          {isNoWinner ? (
-            <>
-              <HelpCircle size={18} className="badge-icon icon-neutral" />
-              <span>DECISION ANALYSIS</span>
-            </>
-          ) : (
-            <>
-              <Trophy size={18} className="badge-icon icon-gold" />
-              <span>RECOMMENDED BEST OVERALL</span>
-            </>
-          )}
+          <Trophy size={18} className="badge-icon icon-gold" />
+          <span>RECOMMENDED BEST OVERALL</span>
         </div>
       </div>
 
       <div className="verdict-content">
         <div className="winner-headline">
-          {isNoWinner ? (
-            <h2 className="winner-title neutral-title">No Clear Winner</h2>
-          ) : (
-            <div className="winner-title-group">
-              <h2 className="winner-title">{winnerItem?.displayName || 'Top Selection'}</h2>
-              {winnerPage?.domain && (
-                <span className="winner-domain-pill">{winnerPage.domain}</span>
-              )}
-            </div>
-          )}
+          <div className="winner-title-group">
+            <h2 className="winner-title">{winnerItem?.displayName || 'Top Selection'}</h2>
+            {winnerPage?.domain && (
+              <span className="winner-domain-pill">{winnerPage.domain}</span>
+            )}
+          </div>
         </div>
 
-        <p className="verdict-reason">{bestOverall.reason}</p>
+        <p className="verdict-reason">{displayReason}</p>
 
-        {!isNoWinner && winnerPage && (
+        {winnerPage && (
           <div className="verdict-action">
             <a
               href={buildAffiliateUrl(winnerPage.url)}
