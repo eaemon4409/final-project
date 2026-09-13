@@ -38,12 +38,16 @@ function broadcastFloatingButtonState(enabled: boolean) {
           !tab.url.startsWith('chrome-extension://') &&
           !tab.url.startsWith('edge://')
         ) {
-          chrome.tabs.sendMessage(tab.id, {
-            action: 'toggleFloatingButton',
-            enabled
-          }).catch(() => {
-            // Ignore restricted tabs
-          });
+          chrome.tabs.sendMessage(
+            tab.id,
+            { action: 'toggleFloatingButton', enabled },
+            () => {
+              // Access chrome.runtime.lastError to mark it handled and prevent Chrome from logging an error
+              if (chrome.runtime && chrome.runtime.lastError) {
+                void chrome.runtime.lastError;
+              }
+            }
+          );
         }
       }
     });
@@ -68,18 +72,18 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === 'openResults') {
     chrome.tabs.create({ url: chrome.runtime.getURL('results.html') });
     sendResponse({ success: true });
-    return true;
+    return false;
   }
 
   if (message.action === 'updateBadge') {
     updateExtensionBadge().then(() => sendResponse({ success: true }));
-    return true;
+    return true; // Keep message channel open for async response
   }
 
   if (message.action === 'broadcastFloatingButtonState') {
     broadcastFloatingButtonState(message.enabled !== false);
     sendResponse({ success: true });
-    return true;
+    return false;
   }
 
   return false;
@@ -100,8 +104,10 @@ chrome.commands.onCommand.addListener(async (command) => {
         !activeTab.url.startsWith('chrome-extension://') &&
         !activeTab.url.startsWith('edge://')
       ) {
-        chrome.tabs.sendMessage(activeTab.id, { action: 'triggerAddCurrentPage' }).catch((err) => {
-          console.warn('Could not send shortcut message to tab:', err);
+        chrome.tabs.sendMessage(activeTab.id, { action: 'triggerAddCurrentPage' }, () => {
+          if (chrome.runtime && chrome.runtime.lastError) {
+            void chrome.runtime.lastError;
+          }
         });
       }
     } catch (err) {
@@ -109,3 +115,4 @@ chrome.commands.onCommand.addListener(async (command) => {
     }
   }
 });
+

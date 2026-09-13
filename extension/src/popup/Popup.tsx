@@ -159,29 +159,6 @@ export const Popup: React.FC = () => {
     const next = !showFab;
     setShowFab(next);
     await setFloatingButtonEnabled(next);
-
-    // Broadcast immediately to background and all open tabs
-    if (typeof chrome !== 'undefined') {
-      if (chrome.runtime && chrome.runtime.sendMessage) {
-        chrome.runtime.sendMessage({
-          action: 'broadcastFloatingButtonState',
-          enabled: next
-        }).catch(() => {});
-      }
-
-      if (chrome.tabs && chrome.tabs.query) {
-        chrome.tabs.query({}, (tabs) => {
-          for (const tab of tabs) {
-            if (tab.id) {
-              chrome.tabs.sendMessage(tab.id, {
-                action: 'toggleFloatingButton',
-                enabled: next
-              }).catch(() => {});
-            }
-          }
-        });
-      }
-    }
   };
 
   return (

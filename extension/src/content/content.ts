@@ -653,12 +653,12 @@ import { PageSnapshot } from '../models/types';
         const isVisible = message.enabled !== false;
         setHostVisibility(isVisible);
         sendResponse({ success: true });
-        return true;
+        return false;
       }
       if (message.action === 'triggerAddCurrentPage') {
         handleFabClick();
         sendResponse({ success: true });
-        return true;
+        return false;
       }
       return false;
     });
