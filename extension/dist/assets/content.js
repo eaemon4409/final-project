@@ -1,4 +1,4 @@
-import{a as R}from"./pageExtractor.js";import{g as h,n as y,a as Y,r as H}from"./storageService.js";(function(){if(document.getElementById("compare-anything-fab-root"))return;const a=document.createElement("div");a.id="compare-anything-fab-root",a.style.position="fixed",a.style.zIndex="2147483647",a.style.bottom="26px",a.style.right="26px",a.style.pointerEvents="none";const C=a.attachShadow({mode:"open"}),k=document.createElement("style");k.textContent=`
+import{a as j}from"./pageExtractor.js";import{g as w,n as m,a as H,b as X}from"./storageService.js";(function(){if(document.getElementById("compare-anything-fab-root"))return;const n=document.createElement("div");n.id="compare-anything-fab-root",n.style.position="fixed",n.style.zIndex="2147483647",n.style.bottom="26px",n.style.right="26px",n.style.pointerEvents="none";const v=n.attachShadow({mode:"open"}),C=document.createElement("style");C.textContent=`
     * {
       box-sizing: border-box;
       margin: 0;
@@ -123,7 +123,7 @@ import{a as R}from"./pageExtractor.js";import{g as h,n as y,a as Y,r as H}from".
       position: absolute;
       bottom: 68px;
       right: 0;
-      width: 310px;
+      width: 335px;
       background: #0f172a;
       color: #ffffff;
       border-radius: 14px;
@@ -175,34 +175,38 @@ import{a as R}from"./pageExtractor.js";import{g as h,n as y,a as Y,r as H}from".
     .toast-actions {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-top: 4px;
+      gap: 6px;
+      margin-top: 6px;
     }
 
     .toast-btn-compare {
-      flex: 1;
+      flex: 1.2;
       background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
       color: #ffffff;
       border: none;
       border-radius: 8px;
-      padding: 8px 12px;
+      padding: 8px 10px;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
-      transition: background 0.18s ease, transform 0.18s ease;
+      gap: 4px;
+      white-space: nowrap;
+      transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
     }
 
     .toast-btn-compare:hover {
       background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
       transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.45);
     }
 
-    .toast-btn-remove {
-      background: rgba(239, 68, 68, 0.18);
+    .toast-btn-clear {
+      flex: 1;
+      background: rgba(239, 68, 68, 0.15);
       color: #fca5a5;
       border: 1px solid rgba(239, 68, 68, 0.35);
       border-radius: 8px;
@@ -210,31 +214,39 @@ import{a as R}from"./pageExtractor.js";import{g as h,n as y,a as Y,r as H}from".
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.18s ease, color 0.18s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
     }
 
-    .toast-btn-remove:hover {
-      background: rgba(239, 68, 68, 0.35);
+    .toast-btn-clear:hover {
+      background: rgba(239, 68, 68, 0.32);
       color: #ffffff;
+      border-color: rgba(239, 68, 68, 0.6);
+      transform: translateY(-1px);
     }
 
     .toast-btn-close {
       background: rgba(255, 255, 255, 0.1);
       color: #cbd5e1;
-      border: none;
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 8px;
-      padding: 8px 10px;
+      padding: 8px 12px;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.18s ease;
+      white-space: nowrap;
+      transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
     }
 
     .toast-btn-close:hover {
       background: rgba(255, 255, 255, 0.2);
       color: #ffffff;
+      transform: translateY(-1px);
     }
-  `;const E=`
+  `;const k=`
     <svg class="fab-icon-svg" viewBox="0 0 24 24">
       <rect x="3" y="4" width="7" height="16" rx="1.5"></rect>
       <rect x="14" y="10" width="7" height="10" rx="1.5"></rect>
@@ -245,7 +257,7 @@ import{a as R}from"./pageExtractor.js";import{g as h,n as y,a as Y,r as H}from".
     <svg class="fab-icon-svg" viewBox="0 0 24 24">
       <polyline points="20 6 9 17 4 12"></polyline>
     </svg>
-  `,f=document.createElement("div");f.className="fab-wrapper";const g=document.createElement("div");g.className="fab-tooltip",g.textContent="Add to Compare (Click)";const e=document.createElement("button");e.className="fab-button",e.title="Compare Anything — Click to Add",e.innerHTML=E;const s=document.createElement("div");s.className="fab-badge",s.textContent="0",s.style.display="none",e.appendChild(s);const o=document.createElement("div");o.className="fab-toast",o.innerHTML=`
+  `,f=document.createElement("div");f.className="fab-wrapper";const g=document.createElement("div");g.className="fab-tooltip",g.textContent="Add to Compare (Click)";const e=document.createElement("button");e.className="fab-button",e.title="Compare Anything — Click to Add",e.innerHTML=k;const s=document.createElement("div");s.className="fab-badge",s.textContent="0",s.style.display="none",e.appendChild(s);const a=document.createElement("div");a.className="fab-toast",a.innerHTML=`
     <div class="toast-header">
       <div class="toast-status-row">
         <span class="toast-status-text">✓ Added to Comparison!</span>
@@ -255,7 +267,7 @@ import{a as R}from"./pageExtractor.js";import{g as h,n as y,a as Y,r as H}from".
     <div class="toast-title"></div>
     <div class="toast-actions">
       <button class="toast-btn-compare">Compare Now ➔</button>
-      <button class="toast-btn-remove" style="display: none;">Remove</button>
+      <button class="toast-btn-clear">Clear All</button>
       <button class="toast-btn-close">Close</button>
     </div>
-  `,f.appendChild(g),f.appendChild(o),f.appendChild(e),C.appendChild(k),C.appendChild(f),(document.body||document.documentElement).appendChild(a);let S=!1,v=null,w=null;async function u(){try{const t=await h(),n=window.location.href,i=y(n),d=t.pages.length;s.textContent=String(d),s.style.display=d>0?"flex":"none";const r=t.pages.find(l=>y(l.url)===i);S=!!r,v=r?r.id:null,S?(e.classList.add("is-added"),e.innerHTML=F,e.appendChild(s),g.textContent=`Page Added (${d}/4) — Click to view`):(e.classList.remove("is-added"),e.innerHTML=E,e.appendChild(s),g.textContent=d>0?`Add to Compare (${d}/4 added)`:"Add to Compare (Click)")}catch(t){console.error("Failed to update compare widget state:",t)}}function c(t,n,i,d=!1,r=!1){w&&clearTimeout(w);const l=o.querySelector(".toast-status-text"),b=o.querySelector(".toast-title"),p=o.querySelector(".toast-count-text"),$=o.querySelector(".toast-btn-compare"),q=o.querySelector(".toast-btn-remove");l&&(l.textContent=t,l.style.color=d?"#f87171":"#34d399"),b&&(b.textContent=n),p&&(p.textContent=i),$&&($.style.display="flex"),q&&(q.style.display=r?"block":"none"),o.classList.add("show"),w=setTimeout(()=>{o.classList.remove("show")},4500)}async function I(){try{const t=await h(),n=window.location.href,i=y(n);if(t.pages.find(p=>y(p.url)===i)){c("✓ Already in Comparison!",document.title||"This Webpage",`(${t.pages.length}/4 pages)`,!1,!0);return}if(t.pages.length>=4){c("⚠️ Maximum 4 pages reached!","You already have 4 pages selected. Click Compare Now to see your side-by-side analysis.","(4/4)",!0,!1);return}const r=R(),l={id:`page-${t.pages.length+1}`,url:r.url,domain:r.domain,title:r.title,description:r.description,structuredData:r.structuredData,importantText:r.importantText,capturedAt:r.capturedAt},b=await Y(l);if(b.success){await u();const p=await h();c("✓ Added to Comparison!",l.title||"Page added",`(${p.pages.length}/4 pages)`,!1,!0)}else c("Note:",b.message||"Could not add page.",`(${t.pages.length}/4)`,!0,!1)}catch(t){console.error("Error adding page to comparison:",t),c("Extraction error","Could not capture enough details from this page.","",!0,!1)}}async function N(){if(v)try{await H(v),await u();const t=await h();c("Removed from Comparison",document.title||"Page",`(${t.pages.length}/4 pages)`,!1,!1)}catch(t){console.error("Failed to remove page:",t)}}let x=!1,z=0,L=0,M=0,P=0,m=!1;e.addEventListener("pointerdown",t=>{x=!0,m=!1,z=t.clientX,L=t.clientY;const n=a.getBoundingClientRect();M=n.left,P=n.top,e.setPointerCapture(t.pointerId)}),e.addEventListener("pointermove",t=>{if(!x)return;const n=t.clientX-z,i=t.clientY-L;(Math.abs(n)>5||Math.abs(i)>5)&&(m=!0,a.style.bottom="auto",a.style.right="auto",a.style.left=`${Math.max(10,Math.min(window.innerWidth-68,M+n))}px`,a.style.top=`${Math.max(10,Math.min(window.innerHeight-68,P+i))}px`)}),e.addEventListener("pointerup",t=>{if(x){x=!1;try{e.releasePointerCapture(t.pointerId)}catch{}}}),e.addEventListener("click",t=>{if(t.stopPropagation(),m){m=!1;return}I()});const A=o.querySelector(".toast-btn-compare");A&&A.addEventListener("click",t=>{t.stopPropagation(),chrome.runtime.sendMessage({action:"openResults"})});const T=o.querySelector(".toast-btn-remove");T&&T.addEventListener("click",t=>{t.stopPropagation(),N()});const B=o.querySelector(".toast-btn-close");B&&B.addEventListener("click",t=>{t.stopPropagation(),o.classList.remove("show")}),typeof chrome<"u"&&chrome.storage&&chrome.storage.onChanged&&chrome.storage.onChanged.addListener((t,n)=>{n==="local"&&t.compare_anything_state&&u()}),u()})();
+  `,f.appendChild(g),f.appendChild(a),f.appendChild(e),v.appendChild(C),v.appendChild(f),(document.body||document.documentElement).appendChild(n);let E=!1,I=null,y=null;async function u(){try{const t=await w(),r=window.location.href,i=m(r),l=t.pages.length;s.textContent=String(l),s.style.display=l>0?"flex":"none";const o=t.pages.find(d=>m(d.url)===i);E=!!o,I=o?o.id:null,E?(e.classList.add("is-added"),e.innerHTML=F,e.appendChild(s),g.textContent=`Page Added (${l}/4) — Click to view`):(e.classList.remove("is-added"),e.innerHTML=k,e.appendChild(s),g.textContent=l>0?`Add to Compare (${l}/4 added)`:"Add to Compare (Click)")}catch(t){console.error("Failed to update compare widget state:",t)}}function c(t,r,i,l=!1,o=!0){y&&clearTimeout(y);const d=a.querySelector(".toast-status-text"),b=a.querySelector(".toast-title"),p=a.querySelector(".toast-count-text"),B=a.querySelector(".toast-btn-compare"),Y=a.querySelector(".toast-btn-clear"),q=a.querySelector(".toast-btn-close");d&&(d.textContent=t,d.style.color=l?"#f87171":"#34d399"),b&&(b.textContent=r),p&&(p.textContent=i),B&&(B.style.display=o?"flex":"none"),Y&&(Y.style.display=o?"flex":"none"),q&&(q.style.display="block"),a.classList.add("show"),y=setTimeout(()=>{a.classList.remove("show")},5e3)}async function N(){try{const t=await w(),r=window.location.href,i=m(r);if(t.pages.find(p=>m(p.url)===i)){c("✓ Already in Comparison!",document.title||"This Webpage",`(${t.pages.length}/4 pages)`,!1,!0);return}if(t.pages.length>=4){c("⚠️ Maximum 4 pages reached!","You already have 4 pages selected. Click Compare Now to see your side-by-side analysis, or Clear All to start fresh.","(4/4)",!0,!0);return}const o=j(),d={id:`page-${t.pages.length+1}`,url:o.url,domain:o.domain,title:o.title,description:o.description,structuredData:o.structuredData,importantText:o.importantText,capturedAt:o.capturedAt},b=await H(d);if(b.success){await u();const p=await w();c("✓ Added to Comparison!",d.title||"Page added",`(${p.pages.length}/4 pages)`,!1,!0)}else c("Note:",b.message||"Could not add page.",`(${t.pages.length}/4)`,!0,!1)}catch(t){console.error("Error adding page to comparison:",t),c("Extraction error","Could not capture enough details from this page.","",!0,!1)}}async function $(){try{await X(),await u(),c("✓ All Pages Cleared!","All selected pages have been cleared. You can start fresh.","(0/4)",!1,!1)}catch(t){console.error("Failed to clear all pages:",t)}}let x=!1,S=0,z=0,A=0,L=0,h=!1;e.addEventListener("pointerdown",t=>{x=!0,h=!1,S=t.clientX,z=t.clientY;const r=n.getBoundingClientRect();A=r.left,L=r.top,e.setPointerCapture(t.pointerId)}),e.addEventListener("pointermove",t=>{if(!x)return;const r=t.clientX-S,i=t.clientY-z;(Math.abs(r)>5||Math.abs(i)>5)&&(h=!0,n.style.bottom="auto",n.style.right="auto",n.style.left=`${Math.max(10,Math.min(window.innerWidth-68,A+r))}px`,n.style.top=`${Math.max(10,Math.min(window.innerHeight-68,L+i))}px`)}),e.addEventListener("pointerup",t=>{if(x){x=!1;try{e.releasePointerCapture(t.pointerId)}catch{}}}),e.addEventListener("click",t=>{if(t.stopPropagation(),h){h=!1;return}N()});const M=a.querySelector(".toast-btn-compare");M&&M.addEventListener("click",t=>{t.stopPropagation(),chrome.runtime.sendMessage({action:"openResults"})});const P=a.querySelector(".toast-btn-clear");P&&P.addEventListener("click",t=>{t.stopPropagation(),$()});const T=a.querySelector(".toast-btn-close");T&&T.addEventListener("click",t=>{t.stopPropagation(),a.classList.remove("show")}),typeof chrome<"u"&&chrome.storage&&chrome.storage.onChanged&&chrome.storage.onChanged.addListener((t,r)=>{r==="local"&&t.compare_anything_state&&u()}),u()})();

@@ -27,3 +27,4 @@ extension/node_modules
 database/*.sqlite
 storage/logs/*.log
 storage/temp
+/scratch

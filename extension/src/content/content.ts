@@ -1,5 +1,5 @@
 import { extractPageFromDOM } from '../extractors/pageExtractor';
-import { getComparisonState, addPageSnapshot, removePageSnapshot } from '../storage/storageService';
+import { getComparisonState, addPageSnapshot, removePageSnapshot, clearComparison } from '../storage/storageService';
 import { normalizeUrl } from '../utils/urlHelper';
 import { PageSnapshot } from '../models/types';
 
@@ -147,7 +147,7 @@ import { PageSnapshot } from '../models/types';
       position: absolute;
       bottom: 68px;
       right: 0;
-      width: 310px;
+      width: 335px;
       background: #0f172a;
       color: #ffffff;
       border-radius: 14px;
@@ -199,34 +199,38 @@ import { PageSnapshot } from '../models/types';
     .toast-actions {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-top: 4px;
+      gap: 6px;
+      margin-top: 6px;
     }
 
     .toast-btn-compare {
-      flex: 1;
+      flex: 1.2;
       background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
       color: #ffffff;
       border: none;
       border-radius: 8px;
-      padding: 8px 12px;
+      padding: 8px 10px;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
-      transition: background 0.18s ease, transform 0.18s ease;
+      gap: 4px;
+      white-space: nowrap;
+      transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
     }
 
     .toast-btn-compare:hover {
       background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
       transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.45);
     }
 
-    .toast-btn-remove {
-      background: rgba(239, 68, 68, 0.18);
+    .toast-btn-clear {
+      flex: 1;
+      background: rgba(239, 68, 68, 0.15);
       color: #fca5a5;
       border: 1px solid rgba(239, 68, 68, 0.35);
       border-radius: 8px;
@@ -234,29 +238,37 @@ import { PageSnapshot } from '../models/types';
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.18s ease, color 0.18s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
     }
 
-    .toast-btn-remove:hover {
-      background: rgba(239, 68, 68, 0.35);
+    .toast-btn-clear:hover {
+      background: rgba(239, 68, 68, 0.32);
       color: #ffffff;
+      border-color: rgba(239, 68, 68, 0.6);
+      transform: translateY(-1px);
     }
 
     .toast-btn-close {
       background: rgba(255, 255, 255, 0.1);
       color: #cbd5e1;
-      border: none;
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 8px;
-      padding: 8px 10px;
+      padding: 8px 12px;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.18s ease;
+      white-space: nowrap;
+      transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
     }
 
     .toast-btn-close:hover {
       background: rgba(255, 255, 255, 0.2);
       color: #ffffff;
+      transform: translateY(-1px);
     }
   `;
 
@@ -307,7 +319,7 @@ import { PageSnapshot } from '../models/types';
     <div class="toast-title"></div>
     <div class="toast-actions">
       <button class="toast-btn-compare">Compare Now ➔</button>
-      <button class="toast-btn-remove" style="display: none;">Remove</button>
+      <button class="toast-btn-clear">Clear All</button>
       <button class="toast-btn-close">Close</button>
     </div>
   `;
@@ -366,7 +378,7 @@ import { PageSnapshot } from '../models/types';
     titleText: string,
     countText: string,
     isError: boolean = false,
-    showRemove: boolean = false
+    showActions: boolean = true
   ) {
     if (toastTimer) clearTimeout(toastTimer);
 
@@ -374,7 +386,8 @@ import { PageSnapshot } from '../models/types';
     const titleEl = toast.querySelector('.toast-title') as HTMLElement;
     const countEl = toast.querySelector('.toast-count-text') as HTMLElement;
     const compareBtn = toast.querySelector('.toast-btn-compare') as HTMLElement;
-    const removeBtn = toast.querySelector('.toast-btn-remove') as HTMLElement;
+    const clearBtn = toast.querySelector('.toast-btn-clear') as HTMLElement;
+    const closeBtn = toast.querySelector('.toast-btn-close') as HTMLElement;
 
     if (statusEl) {
       statusEl.textContent = statusText;
@@ -384,17 +397,20 @@ import { PageSnapshot } from '../models/types';
     if (countEl) countEl.textContent = countText;
 
     if (compareBtn) {
-      compareBtn.style.display = 'flex';
+      compareBtn.style.display = showActions ? 'flex' : 'none';
     }
-    if (removeBtn) {
-      removeBtn.style.display = showRemove ? 'block' : 'none';
+    if (clearBtn) {
+      clearBtn.style.display = showActions ? 'flex' : 'none';
+    }
+    if (closeBtn) {
+      closeBtn.style.display = 'block';
     }
 
     toast.classList.add('show');
 
     toastTimer = setTimeout(() => {
       toast.classList.remove('show');
-    }, 4500);
+    }, 5000);
   }
 
   // Handle Quick Add
@@ -412,7 +428,7 @@ import { PageSnapshot } from '../models/types';
           document.title || 'This Webpage',
           `(${state.pages.length}/4 pages)`,
           false,
-          true // show remove button
+          true
         );
         return;
       }
@@ -420,10 +436,10 @@ import { PageSnapshot } from '../models/types';
       if (state.pages.length >= 4) {
         showToast(
           '⚠️ Maximum 4 pages reached!',
-          'You already have 4 pages selected. Click Compare Now to see your side-by-side analysis.',
+          'You already have 4 pages selected. Click Compare Now to see your side-by-side analysis, or Clear All to start fresh.',
           '(4/4)',
           true,
-          false
+          true
         );
         return;
       }
@@ -474,22 +490,20 @@ import { PageSnapshot } from '../models/types';
     }
   }
 
-  // Handle Remove from comparison
-  async function handleRemoveClick() {
-    if (!currentPageId) return;
+  // Handle Clear All from comparison
+  async function handleClearAllClick() {
     try {
-      await removePageSnapshot(currentPageId);
+      await clearComparison();
       await refreshWidgetState();
-      const state = await getComparisonState();
       showToast(
-        'Removed from Comparison',
-        document.title || 'Page',
-        `(${state.pages.length}/4 pages)`,
+        '✓ All Pages Cleared!',
+        'All selected pages have been cleared. You can start fresh.',
+        '(0/4)',
         false,
         false
       );
     } catch (err) {
-      console.error('Failed to remove page:', err);
+      console.error('Failed to clear all pages:', err);
     }
   }
 
@@ -556,12 +570,12 @@ import { PageSnapshot } from '../models/types';
     });
   }
 
-  // Remove button in Toast
-  const toastRemoveBtn = toast.querySelector('.toast-btn-remove');
-  if (toastRemoveBtn) {
-    toastRemoveBtn.addEventListener('click', (e) => {
+  // Clear All button in Toast
+  const toastClearBtn = toast.querySelector('.toast-btn-clear');
+  if (toastClearBtn) {
+    toastClearBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      handleRemoveClick();
+      handleClearAllClick();
     });
   }
 
