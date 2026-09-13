@@ -10,8 +10,12 @@ const extDir = __dirname;
 const rootDir = path.resolve(extDir, '..');
 const distDir = path.join(extDir, 'dist');
 const releaseDir = path.join(rootDir, 'release');
-const zipFileName = 'compare-anything-extension-v1.0.0.zip';
-const zipFilePath = path.join(releaseDir, zipFileName);
+
+const releaseZipName = 'Compare_Anything_Store_Release.zip';
+const emonZipName = 'Emon_Ahmed_Extension.zip';
+
+const releaseZipPath = path.join(releaseDir, releaseZipName);
+const emonZipPath = path.join(releaseDir, emonZipName);
 
 // 1. Verify build artifacts
 console.log('1. Checking build artifacts in dist/...');
@@ -40,30 +44,52 @@ if (!fs.existsSync(releaseDir)) {
   fs.mkdirSync(releaseDir, { recursive: true });
 }
 
-// 3. Remove old zip if present
-if (fs.existsSync(zipFilePath)) {
-  fs.unlinkSync(zipFilePath);
-}
+// 3. Remove old zips if present
+[releaseZipPath, emonZipPath].forEach((z) => {
+  if (fs.existsSync(z)) {
+    fs.unlinkSync(z);
+  }
+});
 
-// 4. Create ZIP package using PowerShell Compress-Archive
-console.log('\n2. Creating release ZIP package...');
+// 4. Create ZIP packages using PowerShell Compress-Archive
+console.log('\n2. Creating release ZIP packages...');
 try {
-  const psCmd = `powershell -Command "Compress-Archive -Path '${distDir}\\*' -DestinationPath '${zipFilePath}' -Force"`;
+  const psCmd = `powershell -Command "Compress-Archive -Path '${distDir}\\*' -DestinationPath '${emonZipPath}' -Force; Copy-Item -Path '${emonZipPath}' -Destination '${releaseZipPath}' -Force"`;
   execSync(psCmd, { stdio: 'inherit' });
 } catch (err) {
   console.error('Failed to create ZIP package:', err.message);
   process.exit(1);
 }
 
-// 5. Verify ZIP package
-if (fs.existsSync(zipFilePath)) {
-  const stats = fs.statSync(zipFilePath);
+// 5. Copy to Desktop locations
+const desktopLocations = [
+  'C:\\Users\\Emon Ahmed\\OneDrive\\Desktop',
+  'C:\\Users\\Emon Ahmed\\Desktop',
+];
+
+console.log('\n3. Copying packages to Desktop...');
+desktopLocations.forEach((dest) => {
+  if (fs.existsSync(dest)) {
+    try {
+      fs.copyFileSync(emonZipPath, path.join(dest, emonZipName));
+      fs.copyFileSync(releaseZipPath, path.join(dest, releaseZipName));
+      console.log(`✓ Copied packages to: ${dest}`);
+    } catch (e) {
+      console.warn(`Could not copy to ${dest}: ${e.message}`);
+    }
+  }
+});
+
+// 6. Output confirmation
+if (fs.existsSync(releaseZipPath)) {
+  const stats = fs.statSync(releaseZipPath);
   const sizeKb = (stats.size / 1024).toFixed(1);
-  console.log(`\n✓ Successfully created release package:`);
-  console.log(`  Path: ${zipFilePath}`);
-  console.log(`  Size: ${sizeKb} KB`);
-  console.log('\nPackage is ready for upload to the Chrome Web Store Developer Dashboard!');
+  console.log(`\n====================================================`);
+  console.log(`✓ STORE PACKAGE READY: ${releaseZipName} (${sizeKb} KB)`);
+  console.log(`✓ PERSONAL PACKAGE READY: ${emonZipName} (${sizeKb} KB)`);
+  console.log(`====================================================`);
+  console.log(`Ready for direct upload to Chrome Developer Dashboard!`);
 } else {
-  console.error('ERROR: Zip file was not created.');
+  console.error('ERROR: Zip files were not created.');
   process.exit(1);
 }

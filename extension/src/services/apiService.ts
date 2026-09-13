@@ -1,4 +1,4 @@
-import { ApiResponse, ComparisonResult, ComparisonState } from '../models/types';
+import { ApiResponse, ComparisonResult, ComparisonState, AlternativeResult, PageSnapshot } from '../models/types';
 
 const DEFAULT_API_URL = 'https://compare-anything-backend.onrender.com/api/v1';
 const REQUEST_TIMEOUT_MS = 60000; // 60 seconds for AI processing
@@ -119,6 +119,60 @@ export async function comparePages(state: ComparisonState): Promise<ComparisonRe
     // Network error (Backend not running or CORS blocked)
     throw new ApiError(
       `Cannot connect to the AI backend (${baseUrl}). Please ensure the server is running.`,
+      503
+    );
+  }
+}
+
+/**
+ * Request AI-powered alternatives and better deals for a product webpage.
+ */
+export async function fetchAlternatives(item: Partial<PageSnapshot>): Promise<AlternativeResult> {
+  const payload = {
+    title: item.title || 'Product',
+    url: item.url || '',
+    domain: item.domain || '',
+    description: item.description || '',
+    importantText: item.importantText || '',
+  };
+
+  const baseUrl = await getApiBaseUrl();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 35000);
+
+  try {
+    const response = await fetch(`${baseUrl}/alternatives`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    const data = (await response.json()) as ApiResponse<AlternativeResult>;
+
+    if (!response.ok || !data.success || !data.data) {
+      throw new ApiError(data.message || 'Could not fetch alternatives for this item.', response.status);
+    }
+
+    return data.data;
+  } catch (err: unknown) {
+    clearTimeout(timeoutId);
+
+    if (err instanceof ApiError) {
+      throw err;
+    }
+
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new ApiError('Alternatives request timed out. Please try again.', 408);
+    }
+
+    throw new ApiError(
+      `Cannot connect to AI Alternative Finder (${baseUrl}). Please try again.`,
       503
     );
   }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, Check, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { extractDomain } from '../../utils/urlHelper';
 
 interface CurrentPageCardProps {
@@ -9,6 +9,7 @@ interface CurrentPageCardProps {
   isMaxReached: boolean;
   isExtracting: boolean;
   onAddCurrentPage: () => void;
+  onOpenAlternatives: () => void;
   justAdded: boolean;
   errorMessage?: string | null;
 }
@@ -20,6 +21,7 @@ export const CurrentPageCard: React.FC<CurrentPageCardProps> = ({
   isMaxReached,
   isExtracting,
   onAddCurrentPage,
+  onOpenAlternatives,
   justAdded,
   errorMessage
 }) => {
@@ -83,6 +85,18 @@ export const CurrentPageCard: React.FC<CurrentPageCardProps> = ({
           </button>
         )}
       </div>
+
+      {!isInternal && currentTitle && (
+        <button
+          type="button"
+          className="btn-find-alternatives"
+          onClick={onOpenAlternatives}
+          title="AI discovers 2-3 top competing products and store deals"
+        >
+          <Sparkles size={13} />
+          <span>🔍 Find Top Alternatives & Deals</span>
+        </button>
+      )}
 
       {isMaxReached && !isAlreadyAdded && (
         <p className="helper-text warning">Maximum limit reached (4 pages max).</p>

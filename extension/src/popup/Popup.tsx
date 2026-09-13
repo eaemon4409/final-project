@@ -5,6 +5,7 @@ import { SelectedPageList } from './components/SelectedPageList';
 import { GoalInput } from './components/GoalInput';
 import { SettingsModal } from './components/SettingsModal';
 import { OnboardingGuide } from './components/OnboardingGuide';
+import { AlternativesModal } from './components/AlternativesModal';
 import {
   getComparisonState,
   addPageSnapshot,
@@ -33,6 +34,7 @@ export const Popup: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showFab, setShowFab] = useState<boolean>(true);
   const [showHelp, setShowHelp] = useState<boolean>(false);
+  const [isAlternativesOpen, setIsAlternativesOpen] = useState<boolean>(false);
 
   // Load active tab and state on mount
   useEffect(() => {
@@ -258,6 +260,7 @@ export const Popup: React.FC = () => {
           isMaxReached={isMaxReached}
           isExtracting={isExtracting}
           onAddCurrentPage={handleAddCurrentPage}
+          onOpenAlternatives={() => setIsAlternativesOpen(true)}
           justAdded={justAdded}
           errorMessage={errorMessage}
         />
@@ -314,6 +317,14 @@ export const Popup: React.FC = () => {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      {/* Smart Alternative & Deal Discovery Modal */}
+      <AlternativesModal
+        isOpen={isAlternativesOpen}
+        onClose={() => setIsAlternativesOpen(false)}
+        currentTitle={currentTab.title}
+        currentUrl={currentTab.url}
       />
     </div>
   );

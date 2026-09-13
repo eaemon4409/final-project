@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AlternativeController;
 use App\Http\Controllers\Api\ComparisonController;
 use App\Http\Middleware\CompareRateLimiter;
 use Illuminate\Support\Facades\Route;
@@ -48,4 +49,7 @@ Route::prefix('v1')->group(function () {
     // Core Comparison Endpoint (Protected by Rate Limiter)
     Route::post('/compare', [ComparisonController::class, 'compare'])
         ->middleware(CompareRateLimiter::class);
+
+    // Smart Alternative & Better Deal Finder
+    Route::post('/alternatives', [AlternativeController::class, 'suggest']);
 });

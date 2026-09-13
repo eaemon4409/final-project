@@ -76,3 +76,27 @@ export interface ApiResponse<T> {
   message?: string;
   error_detail?: string | null;
 }
+
+export interface AlternativeItem {
+  name: string;
+  category: string;
+  estimatedPriceRange: string;
+  whyBetter: string;
+  tradeOff: string;
+  bestFor: string;
+  searchKeyword: string;
+  searchLinks: {
+    startech: string;
+    ryans: string;
+    daraz: string;
+    google: string;
+    amazon: string;
+  };
+}
+
+export interface AlternativeResult {
+  identifiedProduct: string;
+  category: string;
+  currentPriceEstimate: string;
+  alternatives: AlternativeItem[];
+}
